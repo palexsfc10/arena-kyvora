@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Container } from "@/components/ui/Container";
+import { NotificationsPanel } from "@/components/app/NotificationsPanel";
+import { TeamShield } from "@/components/app/TeamShield";
 import { brand } from "@/content/site";
 import { env } from "@/config/env";
 import { trackEvent } from "@/lib/analytics";
@@ -197,12 +199,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             {selectedTeam ? (
               <Link
                 href="/app/selecionar-time"
-                className="max-w-[7rem] truncate rounded-md border border-line px-2 py-1.5 text-xs font-medium text-ink-soft hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:max-w-[12rem] md:max-w-[14rem]"
+                className="flex min-w-0 items-center gap-1.5 rounded-md border border-line px-2 py-1.5 text-xs font-medium text-ink-soft hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 title={selectedTeam.name}
               >
-                {selectedTeam.name}
+                <TeamShield
+                  logoUrl={selectedTeam.logo_url}
+                  name={selectedTeam.name}
+                  size="sm"
+                />
+                <span className="max-w-[6rem] truncate sm:max-w-[10rem] md:max-w-[12rem]">
+                  {selectedTeam.name}
+                </span>
               </Link>
             ) : null}
+
+            <NotificationsPanel />
 
             <button
               type="button"

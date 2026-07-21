@@ -1,12 +1,18 @@
-import { apiRequest } from "@/lib/api-client";
-import { setAccessToken, clearAccessToken } from "@/lib/auth-storage";
+import { env } from "@/config/env";
+import { apiRequest, ApiError } from "@/lib/api-client";
+import { setAccessToken, clearAccessToken, getAccessToken } from "@/lib/auth-storage";
 import type {
+  ArenaNotificationItem,
   ArenaSession,
   AvailabilityItem,
+  ChallengeCommentItem,
   ChallengeItem,
+  NextMatchItem,
   Paginated,
+  PaginatedNotifications,
   TeamSettings,
 } from "@/lib/arena-types";
+import type { ApiSuccess } from "@/lib/arena-types";
 
 export async function registerArena(payload: {
   name: string;
@@ -202,4 +208,143 @@ export function updateTeamSettings(
     `/api/v1/arena/teams/${organizationId}/settings`,
     { method: "PATCH", body },
   );
+}
+
+export function updateChallenge(
+  organizationId: string,
+  challengeId: string,
+  body: Record<string, unknown>,
+) {
+  return apiRequest<ChallengeItem>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}`,
+    { method: "PATCH", body },
+  );
+}
+
+export function reconfirmChallenge(organizationId: string, challengeId: string) {
+  return apiRequest<ChallengeItem>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/reconfirm`,
+    { method: "POST" },
+  );
+}
+
+export function rejectPendingChanges(organizationId: string, challengeId: string) {
+  return apiRequest<ChallengeItem>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/reject-pending`,
+    { method: "POST" },
+  );
+}
+
+export function listComments(
+  organizationId: string,
+  challengeId: string,
+  params: Record<string, string | undefined> = {},
+) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  const qs = query.toString();
+  return apiRequest<Paginated<ChallengeCommentItem>>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/comments${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export function addComment(
+  organizationId: string,
+  challengeId: string,
+  body: string,
+) {
+  return apiRequest<ChallengeCommentItem>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/comments`,
+    { method: "POST", body: { body } },
+  );
+}
+
+export function listNotifications(
+  organizationId: string,
+  params: Record<string, string | undefined> = {},
+) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  const qs = query.toString();
+  return apiRequest<PaginatedNotifications>(
+    `/api/v1/arena/teams/${organizationId}/notifications${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export function unreadNotificationCount(organizationId: string) {
+  return apiRequest<{ unread_count: number }>(
+    `/api/v1/arena/teams/${organizationId}/notifications/unread-count`,
+  );
+}
+
+export function markNotificationRead(organizationId: string, notificationId: string) {
+  return apiRequest<ArenaNotificationItem>(
+    `/api/v1/arena/teams/${organizationId}/notifications/${notificationId}/read`,
+    { method: "POST" },
+  );
+}
+
+export function markChallengeNotificationsRead(
+  organizationId: string,
+  challengeId: string,
+) {
+  return apiRequest<{ marked: number }>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/notifications/read`,
+    { method: "POST" },
+  );
+}
+
+export function getNextMatch(organizationId: string) {
+  return apiRequest<NextMatchItem | null>(
+    `/api/v1/arena/teams/${organizationId}/next-match`,
+  );
+}
+
+async function uploadOrDeleteLogo(
+  organizationId: string,
+  method: "POST" | "DELETE",
+  formData?: FormData,
+): Promise<{ logo_url: string | null }> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  // Arena wrapper: Gestão /organizations/current/logo requires subscription writes.
+  const response = await fetch(
+    `${env.apiBaseUrl}/api/v1/arena/teams/${organizationId}/logo`,
+    {
+      method,
+      credentials: "include",
+      headers,
+      body: formData,
+    },
+  );
+
+  const json = (await response.json().catch(() => null)) as ApiSuccess<{
+    logo_url?: string | null;
+  }> | null;
+
+  if (!response.ok) {
+    throw new ApiError(
+      json?.message ?? "Não foi possível concluir a solicitação.",
+      response.status,
+      json?.error_code,
+    );
+  }
+
+  return { logo_url: json?.data?.logo_url ?? null };
+}
+
+export function uploadTeamLogo(organizationId: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return uploadOrDeleteLogo(organizationId, "POST", formData);
+}
+
+export function deleteTeamLogo(organizationId: string) {
+  return uploadOrDeleteLogo(organizationId, "DELETE");
 }

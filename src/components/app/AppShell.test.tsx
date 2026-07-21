@@ -36,6 +36,18 @@ vi.mock("@/config/env", () => ({
   },
 }));
 
+vi.mock("@/lib/arena-api", () => ({
+  listNotifications: vi.fn().mockResolvedValue({
+    items: [],
+    page: 1,
+    page_size: 10,
+    total: 0,
+    has_more: false,
+    unread_count: 0,
+  }),
+  markNotificationRead: vi.fn(),
+}));
+
 vi.mock("@/components/auth/AuthProvider", () => ({
   useAuth: () => ({
     status: "authenticated",
@@ -44,6 +56,7 @@ vi.mock("@/components/auth/AuthProvider", () => ({
         {
           organization_id: "org-1",
           name: "demo FC",
+          logo_url: null,
           arena_enabled: true,
           can_manage: true,
         },
@@ -53,13 +66,16 @@ vi.mock("@/components/auth/AuthProvider", () => ({
     selectedTeam: {
       organization_id: "org-1",
       name: "demo FC",
+      logo_url: null,
       arena_enabled: true,
       can_manage: true,
     },
     pendingReceived: 0,
+    unreadNotifications: 0,
     logout: vi.fn(),
     error: null,
     refreshSession: vi.fn(),
+    refreshNotifications: vi.fn(),
   }),
 }));
 

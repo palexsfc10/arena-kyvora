@@ -1,20 +1,26 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
+import { TeamShield } from "@/components/app/TeamShield";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
 import type { TeamSettings } from "@/lib/arena-types";
 
+const MAX_LOGO_BYTES = 4 * 1024 * 1024;
+
 export default function MeuTimePage() {
-  const { selectedTeam, session } = useAuth();
+  const { selectedTeam, session, refreshSession } = useAuth();
   const [settings, setSettings] = useState<TeamSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (!selectedTeam) return;
@@ -55,6 +61,49 @@ export default function MeuTimePage() {
     }
   }
 
+  async function onLogoSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !settings || !selectedTeam) return;
+    setLogoError(null);
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Envie um arquivo de imagem (PNG, JPG ou SVG).");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError("A imagem deve ter no máximo 4 MB.");
+      return;
+    }
+    setLogoBusy(true);
+    try {
+      const result = await arenaApi.uploadTeamLogo(
+        selectedTeam.organization_id,
+        file,
+      );
+      setSettings({ ...settings, logo_url: result.logo_url });
+      await refreshSession();
+    } catch (err) {
+      setLogoError(err instanceof ApiError ? err.message : "Falha ao enviar o logo.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
+  async function onRemoveLogo() {
+    if (!settings || !selectedTeam) return;
+    setLogoError(null);
+    setLogoBusy(true);
+    try {
+      await arenaApi.deleteTeamLogo(selectedTeam.organization_id);
+      setSettings({ ...settings, logo_url: null });
+      await refreshSession();
+    } catch (err) {
+      setLogoError(err instanceof ApiError ? err.message : "Falha ao remover o logo.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
   if (!selectedTeam) {
     return (
       <Container className="py-8">
@@ -74,14 +123,58 @@ export default function MeuTimePage() {
         <p className="mt-6 text-sm text-muted">Carregando…</p>
       ) : (
         <>
-          <div className="mt-6 space-y-1">
-            <p className="font-display text-xl font-semibold">{settings.name}</p>
-            <p className="text-sm text-muted">
-              {[settings.modality, settings.city, settings.state]
-                .filter(Boolean)
-                .join(" · ") || "Sem localização pública"}
-            </p>
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <TeamShield logoUrl={settings.logo_url} name={settings.name} size="md" />
+            <div className="min-w-0 space-y-1">
+              <p className="font-display text-xl font-semibold">{settings.name}</p>
+              <p className="text-sm text-muted">
+                {[settings.modality, settings.city, settings.state]
+                  .filter(Boolean)
+                  .join(" · ") || "Sem localização pública"}
+              </p>
+            </div>
           </div>
+
+          {session?.can_manage_selected ? (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                className="sr-only"
+                onChange={(e) => void onLogoSelected(e)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                disabled={logoBusy}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {logoBusy
+                  ? "Enviando…"
+                  : settings.logo_url
+                    ? "Trocar escudo"
+                    : "Adicionar escudo"}
+              </Button>
+              {settings.logo_url ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  disabled={logoBusy}
+                  onClick={() => void onRemoveLogo()}
+                >
+                  Remover
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+          {logoError ? (
+            <p className="mt-2 text-sm text-red-700" role="alert">
+              {logoError}
+            </p>
+          ) : null}
 
           <form onSubmit={onSave} className="mt-8 max-w-lg space-y-4">
             <label className="flex items-start gap-3 text-sm">

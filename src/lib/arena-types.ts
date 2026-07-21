@@ -49,13 +49,16 @@ export type ChallengeItem = {
   availability_id: string | null;
   sender_organization_id: string;
   sender_organization_name: string;
+  sender_logo_url: string | null;
   recipient_organization_id: string;
   recipient_organization_name: string;
+  recipient_logo_url: string | null;
   proposed_date: string;
   proposed_time: string | null;
   venue_option: string;
   venue_description: string | null;
   message: string | null;
+  contact_phone: string | null;
   status: string;
   created_by: string;
   responded_by: string | null;
@@ -64,6 +67,48 @@ export type ChallengeItem = {
   version: number;
   created_at: string;
   updated_at: string;
+  direction: "sent" | "received" | string;
+  schedule_conflict_hint: boolean;
+  pending_proposed_date: string | null;
+  pending_proposed_time: string | null;
+  pending_venue_option: string | null;
+  pending_venue_description: string | null;
+};
+
+export type ChallengeCommentItem = {
+  id: string;
+  challenge_id: string;
+  author_user_id: string;
+  author_organization_id: string;
+  author_organization_name: string;
+  body: string;
+  created_at: string;
+};
+
+export type ArenaNotificationItem = {
+  id: string;
+  organization_id: string;
+  challenge_id: string | null;
+  kind: string;
+  title: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type NextMatchItem = {
+  challenge_id: string;
+  proposed_date: string;
+  proposed_time: string | null;
+  venue_option: string;
+  venue_description: string | null;
+  status: string;
+  opponent_organization_id: string;
+  opponent_organization_name: string;
+  opponent_logo_url: string | null;
+  own_organization_id: string;
+  own_organization_name: string;
+  own_logo_url: string | null;
   direction: "sent" | "received" | string;
 };
 
@@ -90,6 +135,10 @@ export type Paginated<T> = {
   page_size: number;
   total: number;
   has_more: boolean;
+};
+
+export type PaginatedNotifications = Paginated<ArenaNotificationItem> & {
+  unread_count: number;
 };
 
 export type ApiSuccess<T> = {

@@ -25,11 +25,13 @@ type AuthContextValue = {
   selectedTeam: ArenaTeamSummary | null;
   error: string | null;
   pendingReceived: number;
+  unreadNotifications: number;
   refreshSession: () => Promise<ArenaSession | null>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   selectTeam: (organizationId: string) => Promise<void>;
   refreshPending: () => Promise<void>;
+  refreshNotifications: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<ArenaSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingReceived, setPendingReceived] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -59,6 +62,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await arenaApi.pendingCount(session.selected_organization_id);
       setPendingReceived(data.pending_received);
+    } catch {
+      // ignore badge errors
+    }
+  }, [session?.selected_organization_id]);
+
+  const refreshNotifications = useCallback(async () => {
+    if (!session?.selected_organization_id) {
+      setUnreadNotifications(0);
+      return;
+    }
+    try {
+      const data = await arenaApi.unreadNotificationCount(
+        session.selected_organization_id,
+      );
+      setUnreadNotifications(data.unread_count);
     } catch {
       // ignore badge errors
     }
@@ -98,7 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshPending();
-  }, [refreshPending, pathname]);
+    void refreshNotifications();
+  }, [refreshPending, refreshNotifications, pathname]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -124,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setStatus("unauthenticated");
     setPendingReceived(0);
+    setUnreadNotifications(0);
     router.replace("/entrar");
   }, [router]);
 
@@ -148,11 +168,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       selectedTeam,
       error,
       pendingReceived,
+      unreadNotifications,
       refreshSession,
       login,
       logout,
       selectTeam,
       refreshPending,
+      refreshNotifications,
     }),
     [
       status,
@@ -160,11 +182,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       selectedTeam,
       error,
       pendingReceived,
+      unreadNotifications,
       refreshSession,
       login,
       logout,
       selectTeam,
       refreshPending,
+      refreshNotifications,
     ],
   );
 
