@@ -38,6 +38,7 @@ export function TeamShield({ logoUrl, name, size = "md", className }: TeamShield
       {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          key={logoUrl}
           src={logoUrl}
           alt={`Escudo do time ${safeName}`}
           className="h-full w-full object-cover"
