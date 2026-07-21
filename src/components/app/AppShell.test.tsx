@@ -128,7 +128,7 @@ describe("AppShell authenticated shell", () => {
     expect(desktop?.textContent).toContain("Teste grátis por 7 dias");
     expect(desktop?.textContent).toContain("Conhecer o Kyvora");
 
-    expect(mobile?.textContent).toContain("Kyvora Gestão");
+    expect(mobile?.textContent).toContain("Kyvora Gestão de Times");
     expect(mobile?.textContent).toContain("Teste grátis por 7 dias");
     expect(mobile?.textContent?.trim().startsWith("7 dias")).toBe(false);
 

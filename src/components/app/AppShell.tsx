@@ -72,7 +72,11 @@ function GestaoCtaLink({
         isDesktop ? "px-3 py-3 text-left" : "px-2.5 py-1.5 text-left",
       )}
       onClick={() => trackGestaoCta(viewport)}
-      aria-label={`${brand.gestaoName} — teste grátis por 7 dias. Abre em nova aba`}
+      aria-label={
+        isDesktop
+          ? `${brand.gestaoName} — teste grátis por 7 dias. Abre em nova aba`
+          : `Kyvora Gestão de Times — teste grátis por 7 dias. Abre em nova aba`
+      }
     >
       {isDesktop ? (
         <span className="flex flex-col gap-1.5">
@@ -91,14 +95,12 @@ function GestaoCtaLink({
           </span>
         </span>
       ) : (
-        <span className="flex min-h-9 items-center justify-between gap-2">
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="whitespace-nowrap text-xs font-semibold leading-tight">
-              {brand.gestaoName}
-            </span>
-            <span className="kyvora-paid-cta-seal inline-flex shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide">
-              Teste grátis por 7 dias
-            </span>
+        <span className="flex min-h-9 w-full items-center gap-2">
+          <span className="min-w-0 flex-1 text-xs font-semibold leading-tight tracking-tight">
+            Kyvora Gestão de Times
+          </span>
+          <span className="kyvora-paid-cta-seal shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide">
+            Teste grátis por 7 dias
           </span>
           <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
         </span>
