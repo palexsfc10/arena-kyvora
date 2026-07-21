@@ -12,8 +12,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Container } from "@/components/ui/Container";
-import { cn } from "@/lib/cn";
 import { brand } from "@/content/site";
+import { env } from "@/config/env";
+import { trackEvent } from "@/lib/analytics";
+import { cn } from "@/lib/cn";
+import {
+  buildGestaoManagementUrl,
+  gestaoDestinationLabel,
+} from "@/lib/gestao-cta";
 
 const navItems = [
   { href: "/app/explorar", label: "Explorar", icon: Compass, mobile: true },
@@ -28,11 +34,24 @@ const navItems = [
   { href: "/app/meu-time", label: "Meu time", icon: UsersRound, mobile: true },
 ];
 
+function trackGestaoCta(viewport: "desktop" | "mobile") {
+  try {
+    trackEvent("arena_kyvora_cta_clicked", {
+      placement: "authenticated_header",
+      viewport,
+      destination: gestaoDestinationLabel(env.gestaoUrl),
+    });
+  } catch {
+    // Analytics must never block navigation.
+  }
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { status, session, selectedTeam, pendingReceived, logout, error, refreshSession } =
     useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const gestaoHref = buildGestaoManagementUrl(env.gestaoUrl);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -107,16 +126,24 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh bg-canvas pb-24 md:pb-8">
+    <div className="min-h-dvh bg-canvas pb-24 lg:pb-8">
       <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas/95 backdrop-blur-md">
-        <Container className="flex h-14 items-center justify-between gap-3">
+        <Container className="flex h-14 items-center justify-between gap-2 sm:gap-3">
           <Link
             href="/app/explorar"
-            className="font-display text-base font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="shrink-0 font-display text-base font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label={`${brand.shortName} by ${brand.ecosystem} — início`}
           >
-            {brand.shortName}
+            <span>{brand.shortName}</span>
+            <span className="ml-1.5 text-[11px] font-medium tracking-wide text-muted">
+              by {brand.ecosystem}
+            </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Área interna">
+
+          <nav
+            className="hidden items-center gap-1 lg:flex"
+            aria-label="Área interna"
+          >
             {navItems.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -139,20 +166,48 @@ export function AppShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
-          <div className="flex items-center gap-2">
+
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+            {gestaoHref ? (
+              <>
+                <a
+                  href={gestaoHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cta-viewport="desktop"
+                  className="hidden min-h-10 items-center rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-ink/30 hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:inline-flex"
+                  onClick={() => trackGestaoCta("desktop")}
+                >
+                  Gerencie seu time no Kyvora
+                </a>
+                <a
+                  href={gestaoHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cta-viewport="mobile"
+                  className="inline-flex min-h-10 shrink-0 items-center rounded-md border border-line px-2 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+                  aria-label="Gerencie seu time no Kyvora"
+                  onClick={() => trackGestaoCta("mobile")}
+                >
+                  Abrir Kyvora
+                </a>
+              </>
+            ) : null}
+
             {selectedTeam ? (
               <Link
                 href="/app/selecionar-time"
-                className="max-w-[9rem] truncate rounded-md border border-line px-2 py-1.5 text-xs font-medium text-ink-soft hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:max-w-[14rem]"
+                className="max-w-[7rem] truncate rounded-md border border-line px-2 py-1.5 text-xs font-medium text-ink-soft hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:max-w-[12rem] md:max-w-[14rem]"
                 title={selectedTeam.name}
               >
                 {selectedTeam.name}
               </Link>
             ) : null}
+
             <button
               type="button"
               onClick={() => void logout()}
-              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md text-muted hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-muted hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="Sair"
             >
               <LogOut className="h-4 w-4" aria-hidden />
@@ -164,7 +219,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main id="conteudo-principal">{children}</main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
         aria-label="Navegação móvel"
       >
         <ul className="grid grid-cols-4">
