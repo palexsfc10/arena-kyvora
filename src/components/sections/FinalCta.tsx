@@ -1,0 +1,77 @@
+"use client";
+
+import { Button } from "@/components/ui/Button";
+import { Container } from "@/components/ui/Container";
+import { env } from "@/config/env";
+import { finalCta } from "@/content/site";
+import { trackEvent } from "@/lib/analytics";
+
+function resolveWaitlistHref(): { href: string; external: boolean; pending: boolean } {
+  if (env.waitlistUrl) {
+    return { href: env.waitlistUrl, external: true, pending: false };
+  }
+  if (env.contactEmail) {
+    const subject = encodeURIComponent("Quero acompanhar o lançamento do Arena Kyvora");
+    return {
+      href: `mailto:${env.contactEmail}?subject=${subject}`,
+      external: false,
+      pending: true,
+    };
+  }
+  return { href: "#acompanhar", external: false, pending: true };
+}
+
+export function FinalCta() {
+  const waitlist = resolveWaitlistHref();
+
+  return (
+    <section
+      id={finalCta.id}
+      aria-labelledby="final-cta-title"
+      className="scroll-mt-24 border-b border-line bg-ink py-16 text-canvas sm:py-20"
+    >
+      <Container>
+        <div className="max-w-2xl">
+          <h2
+            id="final-cta-title"
+            className="font-display text-3xl font-semibold tracking-tight sm:text-4xl"
+          >
+            {finalCta.title}
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-canvas/70 sm:text-lg">
+            {finalCta.subtitle}
+          </p>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              href={waitlist.href}
+              size="lg"
+              target={waitlist.external ? "_blank" : undefined}
+              rel={waitlist.external ? "noopener noreferrer" : undefined}
+              data-analytics={finalCta.primaryEvent}
+              onClick={() => trackEvent(finalCta.primaryEvent)}
+            >
+              {finalCta.primaryLabel}
+            </Button>
+            <Button
+              href={env.gestaoUrl}
+              variant="outline"
+              size="lg"
+              className="border-white/25 text-canvas hover:border-accent hover:bg-transparent hover:text-accent focus-visible:ring-accent focus-visible:ring-offset-ink"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-analytics={finalCta.secondaryEvent}
+              onClick={() => trackEvent(finalCta.secondaryEvent)}
+            >
+              {finalCta.secondaryLabel}
+            </Button>
+          </div>
+
+          {waitlist.pending ? (
+            <p className="mt-5 text-sm text-canvas/55">{finalCta.waitlistPendingNote}</p>
+          ) : null}
+        </div>
+      </Container>
+    </section>
+  );
+}

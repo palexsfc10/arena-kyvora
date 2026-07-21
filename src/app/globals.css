@@ -3,19 +3,126 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #f3f4f0;
+  --surface: #e7e9e2;
+  --ink: #121512;
+  --ink-soft: #2a2f2b;
+  --muted: #5c635d;
+  --line: #d2d6ce;
+  --accent: #c8f000;
+  --accent-strong: #b6dc00;
+  --accent-deep: #5f7400;
+  --background: var(--canvas);
+  --foreground: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background: var(--canvas);
+  font-family: var(--font-body), system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 55%, white);
+  color: var(--ink);
+}
+
+.hero-field {
+  background:
+    radial-gradient(ellipse 80% 55% at 85% 20%, rgba(200, 240, 0, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 10% 90%, rgba(18, 21, 18, 0.06), transparent 50%),
+    linear-gradient(180deg, #f7f8f4 0%, var(--canvas) 100%);
+}
+
+.hero-field::before {
+  content: "";
+  position: absolute;
+  inset: 8% -5% -10% 45%;
+  background:
+    linear-gradient(115deg, transparent 0 46%, rgba(18, 21, 18, 0.045) 46% 47%, transparent 47%),
+    linear-gradient(115deg, transparent 0 62%, rgba(18, 21, 18, 0.04) 62% 63%, transparent 63%),
+    linear-gradient(115deg, transparent 0 78%, rgba(18, 21, 18, 0.035) 78% 79%, transparent 79%),
+    radial-gradient(circle at 72% 48%, transparent 0 11%, rgba(18, 21, 18, 0.06) 11% 12%, transparent 12%);
+  transform: skewX(-8deg);
+  opacity: 0.9;
+}
+
+.hero-grain {
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+}
+
+.motion-rise {
+  animation: rise-in 0.7s ease-out both;
+}
+
+.motion-rise-delay {
+  animation: rise-in 0.75s ease-out 0.12s both;
+}
+
+.motion-rise-delay-2 {
+  animation: rise-in 0.8s ease-out 0.22s both;
+}
+
+.motion-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
