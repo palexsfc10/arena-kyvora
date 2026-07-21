@@ -95,5 +95,15 @@ export async function apiRequest<T>(
     );
   }
 
-  return (json?.data ?? (json as unknown as T)) as T;
+  // Success envelopes may omit `data` (e.g. next-match with no result).
+  // Never fall back to the whole JSON object — that crashes callers expecting
+  // a domain payload (or null).
+  if (json && typeof json === "object" && "success" in json) {
+    if ("data" in json) {
+      return json.data as T;
+    }
+    return undefined as T;
+  }
+
+  return json as T;
 }

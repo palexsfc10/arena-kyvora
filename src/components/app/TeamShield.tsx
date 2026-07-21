@@ -12,8 +12,8 @@ const sizeClasses: Record<"sm" | "md", string> = {
   md: "h-10 w-10 text-sm",
 };
 
-function initialsFor(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+function initialsFor(name: string | null | undefined): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
@@ -24,6 +24,7 @@ function initialsFor(name: string): string {
  * names (rendered separately by the caller) never distort the layout.
  */
 export function TeamShield({ logoUrl, name, size = "md", className }: TeamShieldProps) {
+  const safeName = name?.trim() || "Time";
   return (
     <span
       className={cn(
@@ -31,18 +32,18 @@ export function TeamShield({ logoUrl, name, size = "md", className }: TeamShield
         sizeClasses[size],
         className,
       )}
-      title={name}
+      title={safeName}
       aria-hidden={logoUrl ? undefined : true}
     >
       {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={logoUrl}
-          alt={`Escudo do time ${name}`}
+          alt={`Escudo do time ${safeName}`}
           className="h-full w-full object-cover"
         />
       ) : (
-        <span aria-hidden="true">{initialsFor(name)}</span>
+        <span aria-hidden="true">{initialsFor(safeName)}</span>
       )}
     </span>
   );

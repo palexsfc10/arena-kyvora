@@ -98,7 +98,7 @@ export default function DesafiosPage() {
         direction: direction === "all" ? undefined : direction,
         status: status || undefined,
       });
-      setItems(data.items);
+      setItems(data?.items ?? []);
       await refreshPending();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erro ao carregar desafios.");

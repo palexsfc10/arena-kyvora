@@ -298,10 +298,12 @@ export function markChallengeNotificationsRead(
   );
 }
 
-export function getNextMatch(organizationId: string) {
-  return apiRequest<NextMatchItem | null>(
+export async function getNextMatch(organizationId: string) {
+  const data = await apiRequest<NextMatchItem | null | undefined>(
     `/api/v1/arena/teams/${organizationId}/next-match`,
   );
+  // Backend omits `data` when there is no accepted future match.
+  return data && typeof data === "object" && "challenge_id" in data ? data : null;
 }
 
 async function uploadOrDeleteLogo(

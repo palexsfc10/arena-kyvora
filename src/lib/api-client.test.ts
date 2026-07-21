@@ -48,4 +48,41 @@ describe("api client", () => {
 
     await expect(apiRequest("/api/v1/arena/explore")).rejects.toBeInstanceOf(ApiError);
   });
+
+  it("returns undefined when success envelope omits data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          message: "Próxima partida.",
+        }),
+      }),
+    );
+
+    const data = await apiRequest<{ challenge_id: string } | undefined>(
+      "/api/v1/arena/teams/x/next-match",
+    );
+    expect(data).toBeUndefined();
+  });
+
+  it("preserves explicit null data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          message: "Próxima partida.",
+          data: null,
+        }),
+      }),
+    );
+
+    const data = await apiRequest<null>("/api/v1/arena/teams/x/next-match");
+    expect(data).toBeNull();
+  });
 });

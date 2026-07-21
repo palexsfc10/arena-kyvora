@@ -67,7 +67,7 @@ export default function ExplorarPage() {
         available_on: availableOn || undefined,
         preferred_period: period || undefined,
       });
-      setItems(data.items);
+      setItems(data?.items ?? []);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erro ao carregar oportunidades.");
     } finally {

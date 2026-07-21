@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const data = await arenaApi.pendingCount(session.selected_organization_id);
-      setPendingReceived(data.pending_received);
+      setPendingReceived(data?.pending_received ?? 0);
     } catch {
       // ignore badge errors
     }
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await arenaApi.unreadNotificationCount(
         session.selected_organization_id,
       );
-      setUnreadNotifications(data.unread_count);
+      setUnreadNotifications(data?.unread_count ?? 0);
     } catch {
       // ignore badge errors
     }

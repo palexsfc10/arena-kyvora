@@ -35,7 +35,7 @@ export function NotificationsPanel() {
       const data = await arenaApi.listNotifications(organizationId, {
         page_size: "10",
       });
-      setItems(data.items);
+      setItems(data?.items ?? []);
     } catch {
       // avisos são um extra; falhas silenciosas não devem travar a navegação
     } finally {
