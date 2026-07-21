@@ -37,7 +37,7 @@ export default function CriarContaForm() {
     setError(null);
     if (!validate()) return;
     setSubmitting(true);
-    trackEvent("arena_register_started");
+    trackEvent("sign_up_started");
     try {
       await arenaApi.registerArena({
         name: name.trim(),
@@ -46,7 +46,7 @@ export default function CriarContaForm() {
         confirm_password: confirm,
         accept_terms: acceptTerms,
       });
-      trackEvent("arena_register_completed");
+      trackEvent("sign_up_completed");
       router.replace(`/verificacao-pendente?email=${encodeURIComponent(email.trim())}`);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {

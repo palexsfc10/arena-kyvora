@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Manrope, Syne } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics/AnalyticsConsent";
+import { AnalyticsSpaTracker } from "@/components/analytics/AnalyticsSpaTracker";
 import { env } from "@/config/env";
 import { brand, seo } from "@/content/site";
 import "./globals.css";
@@ -72,6 +74,9 @@ export default function RootLayout({
       <body className={`${display.variable} ${body.variable} antialiased`}>
         {children}
         <AnalyticsConsent />
+        <Suspense fallback={null}>
+          <AnalyticsSpaTracker />
+        </Suspense>
       </body>
     </html>
   );

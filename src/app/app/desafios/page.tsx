@@ -130,10 +130,10 @@ export default function DesafiosPage() {
     try {
       if (action === "accept") {
         await arenaApi.acceptChallenge(selectedTeam.organization_id, challenge.id);
-        trackEvent("arena_challenge_accepted");
+        trackEvent("challenge_accepted");
       } else if (action === "decline") {
         await arenaApi.declineChallenge(selectedTeam.organization_id, challenge.id);
-        trackEvent("arena_challenge_declined");
+        trackEvent("challenge_declined");
       } else if (action === "cancel") {
         await arenaApi.cancelChallenge(selectedTeam.organization_id, challenge.id);
       } else if (action === "reconfirm") {

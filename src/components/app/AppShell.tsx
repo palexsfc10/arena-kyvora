@@ -20,7 +20,6 @@ import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import {
   buildGestaoManagementUrl,
-  gestaoDestinationLabel,
 } from "@/lib/gestao-cta";
 
 const navItems = [
@@ -38,10 +37,10 @@ const navItems = [
 
 function trackGestaoCta(viewport: "desktop" | "mobile") {
   try {
-    trackEvent("arena_kyvora_cta_clicked", {
+    trackEvent("paid_kyvora_cta_clicked", {
       placement: "authenticated_header",
       viewport,
-      destination: gestaoDestinationLabel(env.gestaoUrl),
+      origin: "arena",
     });
   } catch {
     // Analytics must never block navigation.
@@ -177,18 +176,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cta-viewport="desktop"
-                  className="hidden min-h-10 items-center rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-ink/30 hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:inline-flex"
+                  data-cta="paid-kyvora"
+                  className="kyvora-paid-cta hidden min-h-10 max-w-[16rem] items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors md:inline-flex"
                   onClick={() => trackGestaoCta("desktop")}
                 >
-                  Gerencie seu time no Kyvora
+                  <span className="truncate">Gerencie seu time no Kyvora</span>
+                  <span className="kyvora-paid-cta-tag shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none tracking-wide">
+                    Gestão completa
+                  </span>
                 </a>
                 <a
                   href={gestaoHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cta-viewport="mobile"
-                  className="inline-flex min-h-10 shrink-0 items-center rounded-md border border-line px-2 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
-                  aria-label="Gerencie seu time no Kyvora"
+                  data-cta="paid-kyvora"
+                  className="kyvora-paid-cta inline-flex min-h-10 shrink-0 items-center rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors md:hidden"
+                  aria-label="Gerencie seu time no Kyvora — Gestão completa"
                   onClick={() => trackGestaoCta("mobile")}
                 >
                   Abrir Kyvora

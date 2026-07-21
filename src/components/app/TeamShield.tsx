@@ -24,7 +24,8 @@ function initialsFor(name: string | null | undefined): string {
  * names (rendered separately by the caller) never distort the layout.
  */
 export function TeamShield({ logoUrl, name, size = "md", className }: TeamShieldProps) {
-  const safeName = name?.trim() || "Time";
+  const safeName = (name ?? "").trim() || "Time";
+  const showInitials = !(name ?? "").trim();
   return (
     <span
       className={cn(
@@ -44,7 +45,7 @@ export function TeamShield({ logoUrl, name, size = "md", className }: TeamShield
           className="h-full w-full object-cover"
         />
       ) : (
-        <span aria-hidden="true">{initialsFor(safeName)}</span>
+        <span aria-hidden="true">{showInitials ? "?" : initialsFor(safeName)}</span>
       )}
     </span>
   );

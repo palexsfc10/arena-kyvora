@@ -60,7 +60,7 @@ export default function ExplorarPage() {
     setLoading(true);
     setError(null);
     try {
-      trackEvent("arena_explore_viewed");
+      trackEvent("explore_viewed");
       const data = await arenaApi.exploreAvailabilities({
         modality: modality || undefined,
         city: city || undefined,
@@ -130,7 +130,7 @@ export default function ExplorarPage() {
     setFormError(null);
     setSubmitting(true);
     setActionMsg(null);
-    trackEvent("arena_challenge_started");
+    trackEvent("challenge_started");
     try {
       await arenaApi.createChallenge(selectedTeam.organization_id, {
         availability_id: challengeFor.id,
@@ -141,7 +141,7 @@ export default function ExplorarPage() {
         message: challengeMessage || undefined,
         idempotency_key: `ui-${challengeFor.id}-${Date.now()}`,
       });
-      trackEvent("arena_challenge_sent");
+      trackEvent("challenge_created");
       setActionMsg("Desafio enviado.");
       setChallengeFor(null);
       setChallengeMessage("");
@@ -192,7 +192,7 @@ export default function ExplorarPage() {
         className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
         onSubmit={(e) => {
           e.preventDefault();
-          trackEvent("arena_filter_applied");
+          trackEvent("explore_filter_changed");
           void load();
         }}
       >

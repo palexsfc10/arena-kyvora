@@ -22,13 +22,12 @@ export default function EntrarForm() {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
-    trackEvent("arena_login_started");
+    trackEvent("login_started");
     try {
       await arenaApi.login(email.trim(), password);
       let session = await arenaApi.getSession();
       if (session.teams.length === 1) {
         await arenaApi.selectTeam(session.teams[0].organization_id);
-        trackEvent("arena_team_selected", { team_count: 1 });
         session = await arenaApi.getSession();
       } else if (
         session.selected_organization_id &&
@@ -37,6 +36,7 @@ export default function EntrarForm() {
         await arenaApi.selectTeam(session.selected_organization_id);
         session = await arenaApi.getSession();
       }
+      trackEvent("login_completed");
       router.replace(routeAfterSession(session));
     } catch (err) {
       setError(

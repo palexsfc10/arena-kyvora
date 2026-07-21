@@ -119,6 +119,9 @@ describe("AppShell authenticated header", () => {
     expect(mobile).toBeTruthy();
     expect(mobile?.textContent).toContain("Abrir Kyvora");
     expect(desktop?.textContent).toContain("Gerencie seu time no Kyvora");
+    expect(desktop?.textContent).toContain("Gestão completa");
+    expect(desktop?.className).toContain("kyvora-paid-cta");
+    expect(mobile?.className).toContain("kyvora-paid-cta");
 
     for (const link of [desktop!, mobile!]) {
       expect(link).toHaveAttribute("target", "_blank");
@@ -134,6 +137,37 @@ describe("AppShell authenticated header", () => {
 
     expect(screen.getByRole("link", { name: /demo FC/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sair/i })).toBeInTheDocument();
+  });
+
+  it("tracks paid Kyvora CTA with generic params only", () => {
+    render(
+      <AppShell>
+        <p>conteudo</p>
+      </AppShell>,
+    );
+
+    const desktop = document.querySelector(
+      'a[data-cta-viewport="desktop"]',
+    ) as HTMLAnchorElement;
+    fireEvent.click(desktop);
+    expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
+      placement: "authenticated_header",
+      viewport: "desktop",
+      origin: "arena",
+    });
+  });
+
+  it("keeps CTA keyboard-focusable", () => {
+    render(
+      <AppShell>
+        <p>conteudo</p>
+      </AppShell>,
+    );
+    const desktop = document.querySelector(
+      'a[data-cta-viewport="desktop"]',
+    ) as HTMLAnchorElement;
+    desktop.focus();
+    expect(document.activeElement).toBe(desktop);
   });
 
   it("tracks CTA click without blocking navigation when analytics throws", () => {

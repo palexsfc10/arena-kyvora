@@ -12,6 +12,11 @@
   --accent: #c8f000;
   --accent-strong: #b6dc00;
   --accent-deep: #5f7400;
+  /* Subtle Kyvora Gestão CTA — cool blue-violet, never neon */
+  --kyvora-cta: #3f4f7a;
+  --kyvora-cta-soft: #e9ecf5;
+  --kyvora-cta-border: #b4bed6;
+  --kyvora-cta-hover: #e0e5f2;
   --background: var(--canvas);
   --foreground: var(--ink);
 }
@@ -113,6 +118,35 @@ body {
 
 .motion-pulse {
   animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+/* Paid Kyvora CTA — subtle cool tone, secondary to Arena lime actions */
+.kyvora-paid-cta {
+  color: var(--kyvora-cta);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--kyvora-cta-soft) 88%, white) 0%,
+      var(--kyvora-cta-soft) 100%
+    );
+  border-color: var(--kyvora-cta-border);
+}
+
+.kyvora-paid-cta:hover {
+  background: var(--kyvora-cta-hover);
+  border-color: color-mix(in srgb, var(--kyvora-cta) 35%, var(--kyvora-cta-border));
+  color: var(--kyvora-cta);
+}
+
+.kyvora-paid-cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--kyvora-cta) 55%, white);
+  outline-offset: 2px;
+}
+
+.kyvora-paid-cta-tag {
+  color: var(--kyvora-cta);
+  background: color-mix(in srgb, var(--kyvora-cta-soft) 70%, white);
+  border: 1px solid color-mix(in srgb, var(--kyvora-cta-border) 80%, white);
 }
 
 .sr-only {

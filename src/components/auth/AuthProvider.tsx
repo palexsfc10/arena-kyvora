@@ -121,18 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      trackEvent("arena_login_started");
+      trackEvent("login_started");
       await arenaApi.login(email, password);
       let data = await refreshSession();
       if (!data) throw new Error("Sessão inválida após login.");
       if (data.teams.length === 1) {
         await arenaApi.selectTeam(data.teams[0].organization_id);
-        trackEvent("arena_team_selected", { team_count: 1 });
         data = (await refreshSession()) ?? data;
       } else if (data.selected_organization_id) {
         await arenaApi.selectTeam(data.selected_organization_id);
         data = (await refreshSession()) ?? data;
       }
+      trackEvent("login_completed");
       router.replace(routeAfterSession(data));
     },
     [refreshSession, router],
