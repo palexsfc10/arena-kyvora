@@ -109,21 +109,27 @@ describe("AppShell authenticated header", () => {
     );
 
     const desktop = document.querySelector(
-      'a[data-cta-viewport="desktop"]',
-    ) as HTMLAnchorElement | null;
+      '[data-cta-viewport="desktop"]',
+    ) as HTMLElement | null;
     const mobile = document.querySelector(
       'a[data-cta-viewport="mobile"]',
+    ) as HTMLAnchorElement | null;
+    const desktopAction = desktop?.querySelector(
+      "a.kyvora-paid-cta-action",
     ) as HTMLAnchorElement | null;
 
     expect(desktop).toBeTruthy();
     expect(mobile).toBeTruthy();
-    expect(mobile?.textContent).toContain("Abrir Kyvora");
-    expect(desktop?.textContent).toContain("Gerencie seu time no Kyvora");
+    expect(desktopAction).toBeTruthy();
     expect(desktop?.textContent).toContain("Gestão completa");
+    expect(desktop?.textContent).toContain("Faça a gestão do seu time");
+    expect(desktop?.textContent).toContain("Teste grátis por 7 dias");
+    expect(desktopAction?.textContent).toContain("Conhecer o Kyvora");
+    expect(mobile?.textContent).toContain("Gestão do seu time — 7 dias grátis");
     expect(desktop?.className).toContain("kyvora-paid-cta");
     expect(mobile?.className).toContain("kyvora-paid-cta");
 
-    for (const link of [desktop!, mobile!]) {
+    for (const link of [desktopAction!, mobile!]) {
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
       const href = link.getAttribute("href") ?? "";
@@ -146,10 +152,10 @@ describe("AppShell authenticated header", () => {
       </AppShell>,
     );
 
-    const desktop = document.querySelector(
-      'a[data-cta-viewport="desktop"]',
+    const desktopAction = document.querySelector(
+      '[data-cta-viewport="desktop"] a.kyvora-paid-cta-action',
     ) as HTMLAnchorElement;
-    fireEvent.click(desktop);
+    fireEvent.click(desktopAction);
     expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
       placement: "authenticated_header",
       viewport: "desktop",
@@ -163,11 +169,11 @@ describe("AppShell authenticated header", () => {
         <p>conteudo</p>
       </AppShell>,
     );
-    const desktop = document.querySelector(
-      'a[data-cta-viewport="desktop"]',
+    const desktopAction = document.querySelector(
+      '[data-cta-viewport="desktop"] a.kyvora-paid-cta-action',
     ) as HTMLAnchorElement;
-    desktop.focus();
-    expect(document.activeElement).toBe(desktop);
+    desktopAction.focus();
+    expect(document.activeElement).toBe(desktopAction);
   });
 
   it("tracks CTA click without blocking navigation when analytics throws", () => {
@@ -181,12 +187,12 @@ describe("AppShell authenticated header", () => {
       </AppShell>,
     );
 
-    const desktop = document.querySelector(
-      'a[data-cta-viewport="desktop"]',
+    const desktopAction = document.querySelector(
+      '[data-cta-viewport="desktop"] a.kyvora-paid-cta-action',
     ) as HTMLAnchorElement;
-    expect(desktop).toBeTruthy();
-    expect(() => fireEvent.click(desktop)).not.toThrow();
-    expect(desktop.getAttribute("href")).toContain("https://hml.kyvoraapp.com.br");
+    expect(desktopAction).toBeTruthy();
+    expect(() => fireEvent.click(desktopAction)).not.toThrow();
+    expect(desktopAction.getAttribute("href")).toContain("https://hml.kyvoraapp.com.br");
   });
 
   it("does not render CTA that creates org, trial, subscription or checkout", () => {
@@ -199,7 +205,7 @@ describe("AppShell authenticated header", () => {
     const href =
       (
         document.querySelector(
-          'a[data-cta-viewport="desktop"]',
+          '[data-cta-viewport="desktop"] a.kyvora-paid-cta-action',
         ) as HTMLAnchorElement
       ).getAttribute("href") ?? "";
     expect(href).not.toMatch(/checkout|billing|trial|subscribe|assinatura/i);

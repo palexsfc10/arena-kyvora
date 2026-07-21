@@ -149,6 +149,22 @@ body {
   border: 1px solid color-mix(in srgb, var(--kyvora-cta-border) 80%, white);
 }
 
+.kyvora-paid-cta-action {
+  color: var(--kyvora-cta);
+  background: color-mix(in srgb, var(--kyvora-cta-soft) 55%, white);
+  border-color: var(--kyvora-cta-border);
+}
+
+.kyvora-paid-cta-action:hover {
+  background: color-mix(in srgb, var(--kyvora-cta) 12%, white);
+  border-color: color-mix(in srgb, var(--kyvora-cta) 40%, var(--kyvora-cta-border));
+}
+
+.kyvora-paid-cta-action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--kyvora-cta) 55%, white);
+  outline-offset: 2px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

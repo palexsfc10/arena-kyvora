@@ -171,31 +171,44 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             {gestaoHref ? (
               <>
-                <a
-                  href={gestaoHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <div
                   data-cta-viewport="desktop"
                   data-cta="paid-kyvora"
-                  className="kyvora-paid-cta hidden min-h-10 max-w-[16rem] items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors md:inline-flex"
-                  onClick={() => trackGestaoCta("desktop")}
+                  className="kyvora-paid-cta hidden max-w-[18rem] items-center gap-2 rounded-md border px-2 py-1.5 lg:max-w-[20rem] md:flex"
                 >
-                  <span className="truncate">Gerencie seu time no Kyvora</span>
-                  <span className="kyvora-paid-cta-tag shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none tracking-wide">
-                    Gestão completa
-                  </span>
-                </a>
+                  <div className="min-w-0 leading-tight">
+                    <span className="kyvora-paid-cta-tag inline-block rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide">
+                      Gestão completa
+                    </span>
+                    <p className="mt-1 truncate text-xs font-semibold text-[color:var(--kyvora-cta)]">
+                      Faça a gestão do seu time
+                    </p>
+                    <p className="truncate text-[11px] font-medium text-[color:var(--kyvora-cta)]/80">
+                      Teste grátis por 7 dias
+                    </p>
+                  </div>
+                  <a
+                    href={gestaoHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="kyvora-paid-cta-action shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none"
+                    onClick={() => trackGestaoCta("desktop")}
+                  >
+                    Conhecer o Kyvora
+                  </a>
+                </div>
                 <a
                   href={gestaoHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-cta-viewport="mobile"
                   data-cta="paid-kyvora"
-                  className="kyvora-paid-cta inline-flex min-h-10 shrink-0 items-center rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors md:hidden"
-                  aria-label="Gerencie seu time no Kyvora — Gestão completa"
+                  className="kyvora-paid-cta inline-flex min-h-10 max-w-[11rem] shrink-0 items-center rounded-md border px-2 py-1.5 text-[11px] font-semibold leading-tight transition-colors sm:max-w-[14rem] sm:text-xs md:hidden"
+                  aria-label="Faça a gestão do seu time. Teste grátis por 7 dias no Kyvora. Conhecer o Kyvora"
+                  title="Gestão completa · Teste grátis por 7 dias"
                   onClick={() => trackGestaoCta("mobile")}
                 >
-                  Abrir Kyvora
+                  <span className="truncate">Gestão do seu time — 7 dias grátis</span>
                 </a>
               </>
             ) : null}
