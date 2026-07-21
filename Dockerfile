@@ -34,7 +34,10 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+
+# Fail closed before baking: empty / localhost / prod-on-HML must not ship.
+RUN node scripts/validate-public-env.mjs \
+  && npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
