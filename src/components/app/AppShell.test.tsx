@@ -96,17 +96,20 @@ describe("AppShell authenticated shell", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /Arena by Kyvora — início/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("by Kyvora")).toBeInTheDocument();
+      screen.getAllByRole("link", { name: /Arena by Kyvora — início/i }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("by Kyvora").length).toBeGreaterThan(0);
   });
 
-  it("uses header CTA on desktop and mobile-nav CTA on small screens", () => {
+  it("keeps Gestão CTA in sidebar and mobile nav, never alone as 7 dias grátis", () => {
     render(
       <AppShell>
         <p>conteudo</p>
       </AppShell>,
     );
+
+    const header = document.querySelector("header");
+    expect(header?.querySelector('[data-cta="paid-kyvora"]')).toBeNull();
 
     const desktop = document.querySelector(
       'a[data-cta-viewport="desktop"]',
@@ -117,18 +120,17 @@ describe("AppShell authenticated shell", () => {
 
     expect(desktop).toBeTruthy();
     expect(mobile).toBeTruthy();
-    expect(desktop?.closest("header")).toBeTruthy();
-    expect(document.querySelector("aside")).toBeNull();
+    expect(desktop?.closest("aside")).toBeTruthy();
     expect(mobile?.closest('nav[aria-label="Navegação móvel"]')).toBeTruthy();
 
+    expect(desktop?.textContent).toContain("Precisa organizar seu time?");
     expect(desktop?.textContent).toContain("Kyvora Gestão");
-    expect(desktop?.textContent).toContain("Teste 7 dias grátis");
-    expect(desktop?.textContent).not.toContain("Precisa organizar seu time?");
-    expect(mobile?.textContent).toContain("Kyvora Gestão");
-    expect(mobile?.textContent).toContain("7 dias grátis");
+    expect(desktop?.textContent).toContain("Teste grátis por 7 dias");
+    expect(desktop?.textContent).toContain("Conhecer o Kyvora");
 
-    expect(desktop?.className).toContain("kyvora-paid-cta");
-    expect(mobile?.className).toContain("kyvora-paid-cta");
+    expect(mobile?.textContent).toContain("Kyvora Gestão");
+    expect(mobile?.textContent).toContain("Teste grátis por 7 dias");
+    expect(mobile?.textContent?.trim().startsWith("7 dias")).toBe(false);
 
     for (const link of [desktop!, mobile!]) {
       expect(link).toHaveAttribute("target", "_blank");
@@ -153,20 +155,18 @@ describe("AppShell authenticated shell", () => {
       </AppShell>,
     );
 
-    const desktop = document.querySelector(
-      'a[data-cta-viewport="desktop"]',
-    ) as HTMLAnchorElement;
-    fireEvent.click(desktop);
+    fireEvent.click(
+      document.querySelector('a[data-cta-viewport="desktop"]') as HTMLAnchorElement,
+    );
     expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
-      placement: "authenticated_header",
+      placement: "authenticated_sidebar",
       viewport: "desktop",
       origin: "arena",
     });
 
-    const mobile = document.querySelector(
-      'a[data-cta-viewport="mobile"]',
-    ) as HTMLAnchorElement;
-    fireEvent.click(mobile);
+    fireEvent.click(
+      document.querySelector('a[data-cta-viewport="mobile"]') as HTMLAnchorElement,
+    );
     expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
       placement: "authenticated_mobile_nav",
       viewport: "mobile",
@@ -201,7 +201,6 @@ describe("AppShell authenticated shell", () => {
     const desktop = document.querySelector(
       'a[data-cta-viewport="desktop"]',
     ) as HTMLAnchorElement;
-    expect(desktop).toBeTruthy();
     expect(() => fireEvent.click(desktop)).not.toThrow();
     expect(desktop.getAttribute("href")).toContain("https://hml.kyvoraapp.com.br");
   });
