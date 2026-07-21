@@ -120,7 +120,7 @@ body {
   animation: soft-pulse 2.4s ease-in-out infinite;
 }
 
-/* Paid Kyvora CTA — stronger blue, white text, compact trial seal */
+/* Paid Kyvora Gestão CTA — complementary product, not an Arena limit */
 .kyvora-paid-cta {
   color: #ffffff;
   background: var(--kyvora-cta);
@@ -136,6 +136,10 @@ body {
 .kyvora-paid-cta:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--kyvora-cta) 45%, white);
   outline-offset: 2px;
+}
+
+.kyvora-paid-cta-support {
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .kyvora-paid-cta-seal {

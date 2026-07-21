@@ -159,6 +159,9 @@ export default function ExplorarPage() {
       <p className="mt-1 text-sm text-muted">
         Disponibilidades públicas de outros times prontos para jogar.
       </p>
+      <p className="mt-2 text-xs text-muted">
+        Arena Kyvora — gratuito para encontrar times e marcar jogos.
+      </p>
 
       {!nextMatchLoading && nextMatch ? (
         <div className="mt-6 rounded-lg border border-line bg-surface p-4">

@@ -79,7 +79,7 @@ vi.mock("@/components/auth/AuthProvider", () => ({
   }),
 }));
 
-describe("AppShell authenticated header", () => {
+describe("AppShell authenticated shell", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -96,17 +96,20 @@ describe("AppShell authenticated header", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /Arena by Kyvora — início/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("by Kyvora")).toBeInTheDocument();
+      screen.getAllByRole("link", { name: /Arena by Kyvora — início/i }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("by Kyvora").length).toBeGreaterThan(0);
   });
 
-  it("exposes Gestão CTA from env.gestaoUrl with UTMs and safe attributes", () => {
+  it("keeps Gestão CTA out of the header and in sidebar/mobile nav", () => {
     render(
       <AppShell>
         <p>conteudo</p>
       </AppShell>,
     );
+
+    const header = document.querySelector("header");
+    expect(header?.querySelector('[data-cta="paid-kyvora"]')).toBeNull();
 
     const desktop = document.querySelector(
       'a[data-cta-viewport="desktop"]',
@@ -117,19 +120,19 @@ describe("AppShell authenticated header", () => {
 
     expect(desktop).toBeTruthy();
     expect(mobile).toBeTruthy();
-    expect(desktop?.textContent).toContain("Gerencie seu time");
-    expect(desktop?.textContent).toContain("7 dias grátis");
-    expect(desktop?.textContent).not.toContain("Gestão completa");
+    expect(desktop?.closest("aside")).toBeTruthy();
+    expect(mobile?.closest('nav[aria-label="Navegação móvel"]')).toBeTruthy();
+
+    expect(desktop?.textContent).toContain("Precisa organizar seu time?");
+    expect(desktop?.textContent).toContain("Kyvora Gestão");
+    expect(desktop?.textContent).toContain("Teste grátis por 7 dias");
+    expect(desktop?.textContent).toContain("Conhecer o Kyvora");
+    expect(mobile?.textContent).toContain("Kyvora Gestão");
     expect(mobile?.textContent).toContain("7 dias grátis");
-    expect(mobile?.textContent).not.toMatch(/truncat/i);
+    expect(mobile?.textContent).not.toMatch(/^7 dias grátis$/);
+
     expect(desktop?.className).toContain("kyvora-paid-cta");
     expect(mobile?.className).toContain("kyvora-paid-cta");
-    expect(desktop?.querySelector(".kyvora-paid-cta-seal")?.textContent).toBe(
-      "7 dias grátis",
-    );
-    expect(mobile?.querySelector(".kyvora-paid-cta-seal")?.textContent).toBe(
-      "7 dias grátis",
-    );
 
     for (const link of [desktop!, mobile!]) {
       expect(link).toHaveAttribute("target", "_blank");
@@ -159,8 +162,18 @@ describe("AppShell authenticated header", () => {
     ) as HTMLAnchorElement;
     fireEvent.click(desktop);
     expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
-      placement: "authenticated_header",
+      placement: "authenticated_sidebar",
       viewport: "desktop",
+      origin: "arena",
+    });
+
+    const mobile = document.querySelector(
+      'a[data-cta-viewport="mobile"]',
+    ) as HTMLAnchorElement;
+    fireEvent.click(mobile);
+    expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
+      placement: "authenticated_mobile_nav",
+      viewport: "mobile",
       origin: "arena",
     });
   });
