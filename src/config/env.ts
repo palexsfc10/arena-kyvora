@@ -18,6 +18,10 @@ export const env = {
     "NEXT_PUBLIC_GESTAO_URL",
     "https://app.kyvoraapp.com.br",
   ),
+  apiBaseUrl: readPublic(
+    "NEXT_PUBLIC_KYVORA_API_BASE_URL",
+    "http://localhost:8000",
+  ),
   waitlistUrl: readPublic("NEXT_PUBLIC_WAITLIST_URL"),
   contactEmail: readPublic("NEXT_PUBLIC_CONTACT_EMAIL", "contato@kyvoraapp.com.br"),
   googleAnalyticsId: readPublic("NEXT_PUBLIC_GA_MEASUREMENT_ID"),

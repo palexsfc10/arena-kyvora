@@ -18,10 +18,10 @@ test.describe("Arena Kyvora landing", () => {
       page.getByRole("banner").getByText("Arena Kyvora", { exact: true }),
     ).toBeVisible();
 
-    await page
-      .getByRole("link", { name: "Conhecer funcionalidades" })
-      .first()
-      .click();
+    await expect(page.locator('a[href="/entrar"]').first()).toBeAttached();
+    await expect(page.locator('a[href="/criar-conta"]').first()).toBeAttached();
+
+    await page.goto("/#funcionalidades");
     await expect(page.locator("#funcionalidades")).toBeInViewport();
 
     const comingSoon = page.getByText("Em breve");
@@ -35,12 +35,7 @@ test.describe("Arena Kyvora landing", () => {
   test("final CTA and legal placeholders are reachable", async ({ page }) => {
     await page.goto("/");
 
-    const openMenu = page.getByRole("button", { name: "Abrir menu" });
-    if (await openMenu.isVisible()) {
-      await openMenu.click();
-    }
-
-    await page.getByRole("link", { name: "Quero conhecer" }).first().click();
+    await page.goto("/#acompanhar");
     await expect(page.locator("#acompanhar")).toBeInViewport();
 
     await page.goto("/privacidade");
@@ -74,5 +69,29 @@ test.describe("Arena Kyvora landing", () => {
       });
       expect(hasOverflow, `overflow at ${width}px`).toBe(false);
     }
+  });
+});
+
+test.describe("Arena onboarding entry", () => {
+  test("Entrar route is reachable and protected app redirects", async ({
+    page,
+  }) => {
+    await page.goto("/entrar");
+    await expect(page.getByRole("heading", { name: /^Entrar$/i })).toBeVisible();
+    await expect(page.getByLabel(/E-mail/i)).toBeVisible();
+
+    await page.goto("/app/explorar");
+    await expect(page).toHaveURL(/\/entrar/);
+  });
+
+  test("criar conta and protected create-team routes", async ({ page }) => {
+    await page.goto("/criar-conta");
+    await expect(
+      page.getByRole("heading", { name: /Criar conta grátis/i }),
+    ).toBeVisible();
+    await expect(page.getByLabel(/^Nome$/i)).toBeVisible();
+
+    await page.goto("/app/criar-time");
+    await expect(page).toHaveURL(/\/entrar/);
   });
 });

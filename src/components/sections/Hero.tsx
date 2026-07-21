@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { env } from "@/config/env";
 import { hero } from "@/content/site";
 import { trackEvent } from "@/lib/analytics";
 
@@ -39,23 +38,21 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
-              href={hero.primaryCta.href}
+              href="/criar-conta"
               size="lg"
-              data-analytics={hero.primaryCta.event}
-              onClick={() => trackEvent(hero.primaryCta.event)}
+              data-analytics="cta_hero_criar_conta"
+              onClick={() => trackEvent("cta_hero_criar_conta")}
             >
-              {hero.primaryCta.label}
+              Criar conta grátis
             </Button>
             <Button
-              href={env.gestaoUrl}
+              href="/entrar"
               variant="outline"
               size="lg"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-analytics={hero.secondaryCta.event}
-              onClick={() => trackEvent(hero.secondaryCta.event)}
+              data-analytics="cta_hero_entrar"
+              onClick={() => trackEvent("cta_hero_entrar")}
             >
-              {hero.secondaryCta.label}
+              Entrar
             </Button>
           </div>
         </div>

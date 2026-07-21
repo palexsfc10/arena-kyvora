@@ -76,14 +76,23 @@ export function Header() {
           </a>
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-2 md:flex">
           <Button
-            href="#acompanhar"
+            href="/entrar"
+            variant="outline"
             size="md"
-            data-analytics="cta_header_waitlist"
-            onClick={() => trackEvent("cta_header_waitlist")}
+            data-analytics="cta_header_entrar"
+            onClick={() => trackEvent("cta_header_entrar")}
           >
-            Quero conhecer
+            Entrar
+          </Button>
+          <Button
+            href="/criar-conta"
+            size="md"
+            data-analytics="cta_header_criar_conta"
+            onClick={() => trackEvent("cta_header_criar_conta")}
+          >
+            Criar conta grátis
           </Button>
         </div>
 
@@ -129,16 +138,27 @@ export function Header() {
           >
             {brand.gestaoName}
           </a>
-          <div className="pt-2">
+          <div className="flex flex-col gap-2 pt-2">
             <Button
-              href="#acompanhar"
+              href="/entrar"
+              variant="outline"
               className="w-full"
               onClick={() => {
-                trackEvent("cta_header_waitlist_mobile");
+                trackEvent("cta_header_entrar_mobile");
                 close();
               }}
             >
-              Quero conhecer
+              Entrar
+            </Button>
+            <Button
+              href="/criar-conta"
+              className="w-full"
+              onClick={() => {
+                trackEvent("cta_header_criar_conta_mobile");
+                close();
+              }}
+            >
+              Criar conta grátis
             </Button>
           </div>
         </Container>

@@ -1,0 +1,100 @@
+export type ArenaTeamSummary = {
+  organization_id: string;
+  name: string;
+  slug: string;
+  city: string | null;
+  state: string | null;
+  modality: string | null;
+  logo_url: string | null;
+  role: string;
+  can_manage: boolean;
+  arena_enabled: boolean;
+  discoverable: boolean;
+};
+
+export type ArenaSession = {
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  teams: ArenaTeamSummary[];
+  selected_organization_id: string | null;
+  selected_role: string | null;
+  can_manage_selected: boolean;
+  gestao_url: string;
+};
+
+export type AvailabilityItem = {
+  id: string;
+  organization_id: string;
+  organization_name: string;
+  organization_slug: string;
+  logo_url: string | null;
+  modality: string;
+  city: string | null;
+  region: string | null;
+  available_from: string;
+  available_until: string | null;
+  preferred_period: string;
+  venue_option: string;
+  venue_description: string | null;
+  notes: string | null;
+  expires_at: string;
+  created_at: string;
+  status?: string;
+  version?: number;
+};
+
+export type ChallengeItem = {
+  id: string;
+  availability_id: string | null;
+  sender_organization_id: string;
+  sender_organization_name: string;
+  recipient_organization_id: string;
+  recipient_organization_name: string;
+  proposed_date: string;
+  proposed_time: string | null;
+  venue_option: string;
+  venue_description: string | null;
+  message: string | null;
+  status: string;
+  created_by: string;
+  responded_by: string | null;
+  responded_at: string | null;
+  expires_at: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  direction: "sent" | "received" | string;
+};
+
+export type TeamSettings = {
+  organization_id: string;
+  name: string;
+  slug: string;
+  city: string | null;
+  state: string | null;
+  modality: string | null;
+  logo_url: string | null;
+  arena_enabled: boolean;
+  discoverable: boolean;
+  public_city: boolean;
+  public_roster: boolean;
+  public_stats: boolean;
+  public_description: string | null;
+  can_manage: boolean;
+};
+
+export type Paginated<T> = {
+  items: T[];
+  page: number;
+  page_size: number;
+  total: number;
+  has_more: boolean;
+};
+
+export type ApiSuccess<T> = {
+  success: boolean;
+  message: string;
+  data?: T;
+  error_code?: string;
+};

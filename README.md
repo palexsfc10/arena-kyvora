@@ -15,9 +15,11 @@ O Arena Kyvora será um ambiente público para:
 - Publicar disponibilidade
 - Exibir perfil público do time (com privacidade controlada pelo dirigente)
 
-Nesta primeira entrega, o produto é **somente a landing page** de entrada. Nenhuma funcionalidade operacional está disponível.
+Nesta entrega, o produto inclui a **landing page pública** e a **primeira área interna funcional** (`/app`), integrada ao backend central do Kyvora (`/api/v1/arena`).
 
 Mensagem central: **Encontre times. Marque jogos. Viva o esporte.**
+
+Documentação completa do MVP: ver também `C:\kyvora\docs\arena\ARENA_MVP.md` (backend) e o workspace multi-root `arena-kyvora.code-workspace`.
 
 ## Relação com o Kyvora Gestão
 
