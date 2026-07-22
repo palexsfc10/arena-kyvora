@@ -134,10 +134,21 @@ function DesafiosContent() {
     setLoading(true);
     setError(null);
     try {
-      const data = await arenaApi.listChallenges(selectedTeam.organization_id, {
-        page_size: "100",
-      });
-      setItems(data?.items ?? []);
+      // API caps page_size at 50 — page through so client-side tabs stay complete.
+      const collected: ChallengeItem[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const data = await arenaApi.listChallenges(selectedTeam.organization_id, {
+          page: String(page),
+          page_size: "50",
+        });
+        collected.push(...(data?.items ?? []));
+        hasMore = Boolean(data?.has_more);
+        page += 1;
+        if (page > 20) break;
+      }
+      setItems(collected);
       await refreshPending();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erro ao carregar desafios.");
