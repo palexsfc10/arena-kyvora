@@ -51,6 +51,12 @@ test.describe("Arena Kyvora landing", () => {
 
     await page.goto("/contato");
     await expect(page.getByRole("heading", { name: "Contato" })).toBeVisible();
+
+    // Instagram handle (public marketing surface)
+    await page.goto("/");
+    await expect(
+      page.getByRole("link", { name: /Instagram @arenakyvora/i }),
+    ).toBeVisible();
   });
 
   test("does not introduce horizontal overflow at key widths", async ({

@@ -41,6 +41,10 @@ yarn-error.log*
 /blob-report/
 /playwright/.cache/
 /screenshots/
+/artifacts/playwright/
+**/storageState*.json
+e2e/.auth/
+playwright/.auth/
 
 # vercel
 .vercel
