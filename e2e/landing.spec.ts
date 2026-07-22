@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Arena Kyvora landing", () => {
-  test("renders core value proposition and coming soon features", async ({
+  test("renders core value proposition and shipped features", async ({
     page,
   }) => {
     await page.goto("/");
@@ -18,39 +18,45 @@ test.describe("Arena Kyvora landing", () => {
       page.getByRole("banner").getByText("Arena Kyvora", { exact: true }),
     ).toBeVisible();
 
-    await page
-      .getByRole("link", { name: "Conhecer funcionalidades" })
-      .first()
-      .click();
-    await expect(page.locator("#funcionalidades")).toBeInViewport();
+    await expect(page.locator('a[href="/entrar"]').first()).toBeAttached();
+    await expect(page.locator('a[href="/criar-conta"]').first()).toBeAttached();
 
-    const comingSoon = page.getByText("Em breve");
-    await expect(comingSoon.first()).toBeVisible();
-    expect(await comingSoon.count()).toBeGreaterThanOrEqual(7);
+    await expect(page.getByText("Em desenvolvimento")).toHaveCount(0);
+    await expect(page.getByText("Em breve")).toHaveCount(0);
+    await expect(page.getByText("Não operacional")).toHaveCount(0);
+
+    await page.goto("/#funcionalidades");
+    await expect(page.locator("#funcionalidades")).toBeInViewport();
+    await expect(page.getByText("Desafie outros times")).toBeVisible();
 
     await expect(page.getByText("ao vivo", { exact: false })).toHaveCount(0);
     await expect(page.getByText("Quem decide")).toHaveCount(0);
   });
 
-  test("final CTA and legal placeholders are reachable", async ({ page }) => {
+  test("final CTA and legal pages are reachable", async ({ page }) => {
     await page.goto("/");
 
-    const openMenu = page.getByRole("button", { name: "Abrir menu" });
-    if (await openMenu.isVisible()) {
-      await openMenu.click();
-    }
-
-    await page.getByRole("link", { name: "Quero conhecer" }).first().click();
-    await expect(page.locator("#acompanhar")).toBeInViewport();
+    await page.goto("/#comecar");
+    await expect(page.locator("#comecar")).toBeInViewport();
 
     await page.goto("/privacidade");
     await expect(
       page.getByRole("heading", { name: "Política de Privacidade" }),
     ).toBeVisible();
-    await expect(page.getByText("Pendência documental")).toBeVisible();
+    await expect(page.getByText("Documento vigente")).toBeVisible();
+    await expect(page.getByText("Pendência documental")).toHaveCount(0);
+
+    await page.goto("/termos");
+    await expect(page.getByRole("heading", { name: "Termos de Uso" })).toBeVisible();
 
     await page.goto("/contato");
     await expect(page.getByRole("heading", { name: "Contato" })).toBeVisible();
+
+    // Instagram handle (public marketing surface)
+    await page.goto("/");
+    await expect(
+      page.getByRole("link", { name: /Instagram @arenakyvora/i }),
+    ).toBeVisible();
   });
 
   test("does not introduce horizontal overflow at key widths", async ({
@@ -74,5 +80,17 @@ test.describe("Arena Kyvora landing", () => {
       });
       expect(hasOverflow, `overflow at ${width}px`).toBe(false);
     }
+  });
+});
+
+test.describe("Arena onboarding entry", () => {
+  test("Entrar route is reachable and protected app redirects", async ({
+    page,
+  }) => {
+    await page.goto("/entrar");
+    await expect(page.getByRole("heading", { name: /^Entrar$/i })).toBeVisible();
+
+    await page.goto("/app/explorar");
+    await expect(page).toHaveURL(/\/entrar/);
   });
 });

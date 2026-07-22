@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "outline";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "kyvora";
 type ButtonSize = "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -13,6 +13,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-transparent text-ink hover:bg-surface focus-visible:ring-ink/40",
   outline:
     "border border-line bg-transparent text-ink hover:border-ink/40 hover:bg-surface focus-visible:ring-ink/40",
+  kyvora:
+    "kyvora-paid-cta border focus-visible:ring-kyvora",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -26,6 +28,7 @@ type CommonProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   "data-analytics"?: string;
+  "data-testid"?: string;
 };
 
 type ButtonAsButton = CommonProps &
@@ -61,8 +64,14 @@ export function Button(props: ButtonProps) {
   );
 
   if ("href" in props && props.href) {
-    const { href, target, rel, onClick, "data-analytics": analytics } =
-      props as ButtonAsLink;
+    const {
+      href,
+      target,
+      rel,
+      onClick,
+      "data-analytics": analytics,
+      "data-testid": testId,
+    } = props as ButtonAsLink;
     return (
       <Link
         href={href}
@@ -71,6 +80,7 @@ export function Button(props: ButtonProps) {
         rel={rel}
         onClick={onClick}
         data-analytics={analytics}
+        data-testid={testId}
       >
         {children}
       </Link>

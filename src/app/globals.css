@@ -12,6 +12,11 @@
   --accent: #c8f000;
   --accent-strong: #b6dc00;
   --accent-deep: #5f7400;
+  /* Paid Kyvora CTA — stronger cool blue, white type, secondary to Arena lime */
+  --kyvora-cta: #2f4d9b;
+  --kyvora-cta-hover: #274289;
+  --kyvora-cta-soft: #e8eefc;
+  --kyvora-cta-border: #3a5bb0;
   --background: var(--canvas);
   --foreground: var(--ink);
 }
@@ -113,6 +118,35 @@ body {
 
 .motion-pulse {
   animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+/* Paid Kyvora Gestão CTA — complementary product, not an Arena limit */
+.kyvora-paid-cta {
+  color: #ffffff;
+  background: var(--kyvora-cta);
+  border-color: var(--kyvora-cta-border);
+}
+
+.kyvora-paid-cta:hover {
+  background: var(--kyvora-cta-hover);
+  border-color: color-mix(in srgb, var(--kyvora-cta-hover) 80%, black);
+  color: #ffffff;
+}
+
+.kyvora-paid-cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--kyvora-cta) 45%, white);
+  outline-offset: 2px;
+}
+
+.kyvora-paid-cta-support {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.kyvora-paid-cta-seal {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
 }
 
 .sr-only {

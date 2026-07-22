@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { brand, navigation } from "@/content/site";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 
@@ -65,25 +65,36 @@ export function Header() {
               {item.label}
             </a>
           ))}
-          <a
-            href={env.gestaoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            onClick={() => trackEvent("nav_gestao")}
-          >
-            {brand.gestaoName}
-          </a>
+          {hasGestaoUrl() ? (
+            <a
+              href={env.gestaoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-kyvora transition-colors hover:text-kyvora-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kyvora focus-visible:ring-offset-2"
+              onClick={() => trackEvent("nav_gestao")}
+            >
+              {brand.gestaoName}
+            </a>
+          ) : null}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-2 md:flex">
           <Button
-            href="#acompanhar"
+            href="/entrar"
+            variant="outline"
             size="md"
-            data-analytics="cta_header_waitlist"
-            onClick={() => trackEvent("cta_header_waitlist")}
+            data-analytics="cta_header_entrar"
+            onClick={() => trackEvent("cta_header_entrar")}
           >
-            Quero conhecer
+            Entrar
+          </Button>
+          <Button
+            href="/criar-conta"
+            size="md"
+            data-analytics="cta_header_criar_conta"
+            onClick={() => trackEvent("cta_header_criar_conta")}
+          >
+            Criar conta grátis
           </Button>
         </div>
 
@@ -117,28 +128,41 @@ export function Header() {
               {item.label}
             </a>
           ))}
-          <a
-            href={env.gestaoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-md px-3 py-3 text-base font-medium text-ink hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            onClick={() => {
-              trackEvent("nav_gestao_mobile");
-              close();
-            }}
-          >
-            {brand.gestaoName}
-          </a>
-          <div className="pt-2">
-            <Button
-              href="#acompanhar"
-              className="w-full"
+          {hasGestaoUrl() ? (
+            <a
+              href={env.gestaoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md px-3 py-3 text-base font-semibold text-kyvora hover:bg-kyvora-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kyvora"
               onClick={() => {
-                trackEvent("cta_header_waitlist_mobile");
+                trackEvent("nav_gestao_mobile");
                 close();
               }}
             >
-              Quero conhecer
+              {brand.gestaoName}
+            </a>
+          ) : null}
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              href="/entrar"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                trackEvent("cta_header_entrar_mobile");
+                close();
+              }}
+            >
+              Entrar
+            </Button>
+            <Button
+              href="/criar-conta"
+              className="w-full"
+              onClick={() => {
+                trackEvent("cta_header_criar_conta_mobile");
+                close();
+              }}
+            >
+              Criar conta grátis
             </Button>
           </div>
         </Container>

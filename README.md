@@ -1,202 +1,164 @@
 # Arena Kyvora
 
-Landing page pública do **Arena Kyvora** — experiência futura para aproximar times amadores, encontrar adversários e viabilizar novos jogos.
+Repositório próprio do **Arena Kyvora** — frontend público + área autenticada + Arena Admin.
 
-> Repositório próprio. Não faz parte do monorepo/repositório principal do Kyvora Gestão.
+> Não faz parte do monorepo do Kyvora Gestão. A API e o banco continuam **compartilhados** com o Kyvora; este repositório **não** possui banco próprio.
 
-## Visão do produto
+## O que este projeto é hoje
 
-O Arena Kyvora será um ambiente público para:
-
-- Encontrar times e oportunidades de partidas
-- Localizar equipes por cidade, região e modalidade
-- Enviar e responder desafios
-- Combinar amistosos
-- Publicar disponibilidade
-- Exibir perfil público do time (com privacidade controlada pelo dirigente)
-
-Nesta primeira entrega, o produto é **somente a landing page** de entrada. Nenhuma funcionalidade operacional está disponível.
+| Superfície | Stack | Papel |
+| --- | --- | --- |
+| Site público + `/app` | Next.js 15 (App Router) | Landing, auth, explorar, disponibilidades, desafios, meu time |
+| Arena Admin (`./admin`) | Vite + nginx | Painel operacional isolado (`hml-adm-arena…`) |
+| API | Kyvora backend | `/api/v1/arena/*` e `/api/v1/admin/arena/*` |
 
 Mensagem central: **Encontre times. Marque jogos. Viva o esporte.**
 
+Arena é **gratuito** para times amadores. O Kyvora Gestão permanece o SaaS pago de operação do clube.
+
 ## Relação com o Kyvora Gestão
 
-| Produto | Endereço | Papel |
+| Produto | Endereço (prod futuro / HML) | Papel |
 | --- | --- | --- |
-| Kyvora Gestão | `app.kyvoraapp.com.br` | SaaS pago de operação do time |
-| Arena Kyvora | `arena.kyvoraapp.com.br` (futuro) | Experiência pública para encontrar jogos |
+| Kyvora Gestão | `app.` / `hml.` | Operação interna do time |
+| Arena Kyvora | `arena.` / `hml-arena.` | Descoberta e desafios entre times |
+| Arena Admin | `adm-arena.` / `hml-adm-arena.` | Moderação / operação da plataforma Arena |
 
-Futuramente, Arena e Gestão compartilharão backend, autenticação e entidade de time. **Não haverá duplicação** de usuários, contas, times ou jogadores. O dirigente controlará o que fica público.
-
-## Decisões arquiteturais
-
-- Frontend isolado em repositório próprio (este)
-- Next.js App Router + TypeScript strict + Tailwind
-- Conteúdo centralizado em `src/content` para edição sem caçar JSX
-- Config pública via `NEXT_PUBLIC_*` (`src/config/env.ts`)
-- Contratos futuros de API apenas documentados (`src/config/future-api.ts`)
-- Sem backend local, sem auth e sem busca fingindo funcionar
-- Visual autoral em CSS (sem fotos externas nesta versão)
-- Analytics só com consentimento + IDs reais + flag explícita
+Não há duplicação de usuários, contas ou times. Privacidade pública é controlada pelo dirigente no Gestão / flags da API.
 
 ## Stack
 
-- Next.js 15 (App Router)
-- React 19
-- TypeScript (strict)
-- Tailwind CSS 3
-- Lucide Icons
-- Vitest + Testing Library
-- Playwright
-- ESLint (`eslint-config-next`)
+- Next.js 15 + React 19 + TypeScript strict + Tailwind
+- Vitest / Testing Library / Playwright
+- Arena Admin: Vite 6 + React 19 + nginx
+- Docker multi-stage (Node 22) para imagens HML/deployáveis
+- Compose e `.env` reais **permanecem fora do Git** (artefatos operacionais no host)
 
 ## Pré-requisitos
 
-- Node.js 20+ (recomendado 22)
+- Node.js 22+
 - npm 10+
+- Docker (para build de imagens)
 
-## Instalação local
+## Instalação local (site público)
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000).
 
-## Scripts disponíveis
+### Arena Admin local
+
+```bash
+cd admin
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+Abra [http://localhost:3020](http://localhost:3020).
+
+## Scripts (site público)
 
 | Script | Descrição |
 | --- | --- |
-| `npm run dev` | Servidor de desenvolvimento |
+| `npm run dev` | Desenvolvimento |
 | `npm run build` | Build de produção |
 | `npm run start` | Serve o build |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
-| `npm run test` | Testes unitários (Vitest) |
-| `npm run test:e2e` | Testes E2E (Playwright) |
+| `npm run lint` / `typecheck` / `test` / `test:e2e` | Gates |
 | `npm run ci` | Pipeline local completo |
 
-## Variáveis de ambiente
+## Scripts (Admin)
 
-Veja `.env.example`.
-
-| Variável | Uso |
+| Script | Descrição |
 | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | URL canônica / metadata |
-| `NEXT_PUBLIC_SITE_NAME` | Nome do site |
-| `NEXT_PUBLIC_GESTAO_URL` | Link para Kyvora Gestão |
-| `NEXT_PUBLIC_WAITLIST_URL` | URL externa de captura de interesse (opcional) |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | Fallback de contato / waitlist |
-| `NEXT_PUBLIC_ENABLE_ANALYTICS` | `true` para permitir scripts após consentimento |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics (opcional) |
-| `NEXT_PUBLIC_META_PIXEL_ID` | Meta Pixel (opcional) |
+| `npm run dev` | Vite em `:3020` |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc -b` |
+| `npm run build` | Bundle estático |
+| `npm run validate:env` | Valida `VITE_*` para imagem |
 
-Nenhum segredo de backend deve ser colocado no frontend.
+## Contrato de variáveis públicas (bake-time)
 
-## Testes
+`NEXT_PUBLIC_*` e `VITE_*` são **incorporadas no bundle no build**. Não são segredos. Nunca coloque senha, token, chave privada ou credencial nessas variáveis.
+
+| Variável | DEV | HML | PRD (futuro) |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | localhost ok | `https://hml-arena.kyvoraapp.com.br` (obrigatória) | `https://arena.kyvoraapp.com.br` (go-live) |
+| `NEXT_PUBLIC_GESTAO_URL` | localhost ok | `https://hml.kyvoraapp.com.br` (**obrigatória**) | `https://app.kyvoraapp.com.br` (go-live) |
+| `NEXT_PUBLIC_KYVORA_API_BASE_URL` | localhost ok | `https://hml-api.kyvoraapp.com.br` (obrigatória) | `https://api.kyvoraapp.com.br` (go-live) |
+| `NEXT_PUBLIC_ALLOW_INDEXING` | `false` | **`false`** | `true` só no go-live autorizado |
+| `NEXT_PUBLIC_ENABLE_ANALYTICS` | `false` | `false` por padrão | sob decisão + consentimento |
+| Admin `VITE_API_BASE_URL` | localhost | `https://hml-api.kyvoraapp.com.br` | API prod no go-live |
+| Admin `VITE_APP_ENV` | `development` | `staging` | `production` |
+
+Referências versionadas: `.env.example`, `.env.hml.example`, `admin/.env.example`.
+Validador de imagem: `scripts/validate-public-env.mjs` e `admin/scripts/validate-admin-env.mjs`.
+
+- HML: robots `Disallow: /`, metadata `noindex`, sitemap `[]`.
+- Admin: sempre `X-Robots-Tag: noindex` (nunca indexável).
+
+## Docker
+
+Compose e `.env` reais ficam **fora** deste repositório. Aqui versionamos apenas Dockerfiles.
+
+O `Dockerfile` **não** define defaults HML/PRD para as URLs públicas. Builds sem
+`--build-arg` explícitos falham em `scripts/validate-public-env.mjs`.
+
+### Arena público
 
 ```bash
-npm run test
-npx playwright install chromium   # primeira vez
-npm run build
-npm run test:e2e
+docker build \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://hml-arena.kyvoraapp.com.br \
+  --build-arg NEXT_PUBLIC_KYVORA_API_BASE_URL=https://hml-api.kyvoraapp.com.br \
+  --build-arg NEXT_PUBLIC_GESTAO_URL=https://hml.kyvoraapp.com.br \
+  --build-arg NEXT_PUBLIC_ALLOW_INDEXING=false \
+  --build-arg NEXT_PUBLIC_ENABLE_ANALYTICS=false \
+  -t arena-kyvora-web:local .
 ```
 
-## Build
+- Runtime: Node 22, usuário `nextjs`, `HOSTNAME=0.0.0.0`, porta `3000`
+- Health: `GET /api/health` → `{"status":"ok","service":"arena-web"}`
+- Sem bind mount, sem `.env` real na imagem, sem `npm install` no startup
+
+### Arena Admin
 
 ```bash
-npm run build
-npm run start
+cd admin
+docker build \
+  --build-arg VITE_API_BASE_URL=https://hml-api.kyvoraapp.com.br \
+  --build-arg VITE_APP_ENV=staging \
+  -t arena-kyvora-admin:local .
 ```
 
-## Deploy na Vercel
+- Runtime: nginx estático, porta `80`, SPA fallback, headers de segurança + `noindex`
+- Health: `GET /health` → `{"status":"ok","service":"arena-admin"}`
 
-1. Importe este repositório na Vercel
-2. Framework preset: **Next.js**
-3. Configure as variáveis `NEXT_PUBLIC_*` (mínimo: `NEXT_PUBLIC_SITE_URL=https://arena.kyvoraapp.com.br`)
-4. Domínio futuro sugerido: `arena.kyvoraapp.com.br`
-5. Deploy
+### Rollback
 
-Não é necessário banco, serverless functions nem integrações nesta etapa.
+Rollback = **voltar a tag/digest da imagem** (ou o commit da branch) no host de deploy.
+**Nunca** apagar banco, volumes Postgres ou dados do Kyvora como parte de rollback do Arena.
 
-## Estrutura de diretórios
+## Estrutura
 
 ```text
-src/
-  app/                 # Rotas App Router (landing + placeholders legais)
-  components/
-    analytics/         # Consentimento e carregamento condicional
-    layout/            # Header / Footer
-    sections/          # Seções da landing
-    ui/                # Primitivos reutilizáveis
-  config/              # env + contratos futuros de API
-  content/             # Copy e estrutura de conteúdo
-  i18n/                # Preparação para localização
-  lib/                 # Utilitários (cn, analytics events)
-  test/                # Setup Vitest
-e2e/                   # Playwright
-public/                # Favicon e estáticos versionados
-.github/workflows/     # CI
+src/                 # Next.js (público + /app)
+admin/               # Vite Admin isolado
+scripts/             # validate-public-env.mjs
+docs/HML.md          # Homologação Jarvis
+Dockerfile           # Arena web standalone
+admin/Dockerfile     # Admin estático
 ```
 
-## Funcionalidades atuais
+## Documentação adicional
 
-- Landing page pública responsiva
-- Navegação por âncoras + menu mobile acessível
-- Seção de funcionalidades planejadas com selo “Em breve”
-- Como funcionará (3 passos)
-- Relação com Kyvora Gestão
-- CTA de acompanhamento (link configurável ou mailto)
-- SEO (metadata, OG, Twitter, robots, sitemap, JSON-LD)
-- Placeholders honestos de Privacidade e Termos
-- Página de Contato via e-mail
-- Preparação de analytics com consentimento
+- `docs/HML.md` — homologação
+- `docs/ARENA_INTERNAL.md` — área autenticada
+- `docs/ARENA_ADMIN.md` — painel admin
 
-## Funcionalidades planejadas (produto)
+## Origem visual
 
-Todas **em breve** — não operacionais nesta release:
-
-1. Encontre jogos
-2. Times próximos
-3. Desafie outros times
-4. Organize amistosos
-5. Disponibilidade do time
-6. Perfil público
-7. Integração com dados do Kyvora Gestão
-
-## Evolução arquitetural
-
-Quando o Arena sair da landing:
-
-1. **APIs públicas do Kyvora** — busca de times, perfil público, disponibilidade e desafios (`src/config/future-api.ts`)
-2. **Identidade única** — mesmo usuário/time do Kyvora Gestão; sem cadastro paralelo
-3. **Privacidade** — dirigente controla campos públicos; nunca expor endereço privado
-4. **Auth cross-domain** — estratégia segura entre `app.` e `arena.` (cookies/OAuth/session bridge)
-5. **Desafios → Gestão** — confrontos confirmados podem gerar registros na operação
-6. **Proteção** — rate limiting, abuse prevention e consentimento para geolocalização
-7. **Observabilidade** — métricas de funil (busca → desafio → confirmação)
-
-Esta etapa **não** implementa banco, auth nem backend paralelo.
-
-## Pendências reais (decisão externa)
-
-- Conteúdo jurídico definitivo (Privacidade / Termos)
-- URL definitiva de captura de leads (`NEXT_PUBLIC_WAITLIST_URL`)
-- IDs reais de GA / Meta Pixel (se forem usados)
-- Domínio e DNS de `arena.kyvoraapp.com.br`
-- Design system compartilhado futuro com o ecossistema Kyvora
-- Contratos finais das APIs públicas
-
-## Origem e licença de recursos visuais
-
-- **Sem fotografias** nesta versão
-- Composição gráfica autoral em CSS (`hero-field` / `hero-grain` em `globals.css`)
-- Ícones: [Lucide](https://lucide.dev/) (ISC)
-- Tipografia: Syne e Manrope via `next/font` (SIL Open Font License)
-- Favicon SVG autoral em `public/favicon.svg`
-
-## Referência de protótipo
-
-Houve um protótipo conceitual em `https://arena-kyvora.palexsfc.chatgpt.site`. A implementação deste repositório foi reconstruída profissionalmente a partir do briefing do produto; a URL de referência pode exigir autenticação e não é dependência de runtime.
+Composição CSS autoral, Lucide (ISC), Syne/Manrope (`next/font`, OFL), favicon SVG autoral. Sem fotos externas nesta base.

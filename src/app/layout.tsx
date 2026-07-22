@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Manrope, Syne } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics/AnalyticsConsent";
-import { env } from "@/config/env";
+import { AnalyticsSpaTracker } from "@/components/analytics/AnalyticsSpaTracker";
+import { env, resolveMetadataBaseUrl } from "@/config/env";
 import { brand, seo } from "@/content/site";
 import "./globals.css";
 
@@ -17,10 +19,11 @@ const body = Manrope({
   display: "swap",
 });
 
-const siteUrl = env.siteUrl.replace(/\/$/, "");
+const metadataBase = resolveMetadataBaseUrl();
+const siteUrl = metadataBase.origin;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase,
   title: {
     default: seo.title,
     template: `%s · ${brand.name}`,
@@ -48,8 +51,8 @@ export const metadata: Metadata = {
     description: seo.description,
   },
   robots: {
-    index: true,
-    follow: true,
+    index: env.allowIndexing,
+    follow: env.allowIndexing,
   },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
@@ -72,6 +75,9 @@ export default function RootLayout({
       <body className={`${display.variable} ${body.variable} antialiased`}>
         {children}
         <AnalyticsConsent />
+        <Suspense fallback={null}>
+          <AnalyticsSpaTracker />
+        </Suspense>
       </body>
     </html>
   );

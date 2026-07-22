@@ -40,7 +40,7 @@ export const futureEndpoints: FutureApiEndpoint[] = [
     method: "POST",
     path: "/public/v1/challenges",
     purpose: "Enviar desafio entre times autenticados",
-    notes: "Exige identidade compartilhada com Kyvora Gestão",
+    notes: "Exige identidade compartilhada com Kyvora Gestão de Times",
   },
   {
     id: "challenges.respond",

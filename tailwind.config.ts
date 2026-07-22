@@ -24,6 +24,12 @@ const config: Config = {
           strong: "var(--accent-strong)",
           deep: "var(--accent-deep)",
         },
+        kyvora: {
+          DEFAULT: "var(--kyvora-cta)",
+          hover: "var(--kyvora-cta-hover)",
+          soft: "var(--kyvora-cta-soft)",
+          border: "var(--kyvora-cta-border)",
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],

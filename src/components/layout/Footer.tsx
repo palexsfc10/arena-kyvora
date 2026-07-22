@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { brand, footer, navigation } from "@/content/site";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -35,16 +35,18 @@ export function Footer() {
                   </a>
                 </li>
               ))}
-              <li>
-                <a
-                  href={env.gestaoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-canvas/80 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  {brand.gestaoName}
-                </a>
-              </li>
+              {hasGestaoUrl() ? (
+                <li>
+                  <a
+                    href={env.gestaoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-[#9bb4f0] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kyvora"
+                  >
+                    {brand.gestaoName}
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
 
@@ -67,11 +69,22 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-canvas/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-canvas/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {brand.name}
           </p>
-          <p>arena.kyvoraapp.com.br</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+            <a
+              href={brand.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-canvas/70 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              aria-label={`Instagram @${brand.instagramHandle}`}
+            >
+              Instagram @{brand.instagramHandle}
+            </a>
+            <p>arena.kyvoraapp.com.br</p>
+          </div>
         </div>
       </Container>
     </footer>

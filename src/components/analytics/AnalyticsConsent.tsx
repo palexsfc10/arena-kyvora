@@ -4,40 +4,44 @@ import { useEffect, useState } from "react";
 import Script from "next/script";
 import { env } from "@/config/env";
 import { Button } from "@/components/ui/Button";
+import {
+  isAnalyticsRuntimeAllowed,
+  readAnalyticsConsent,
+  trackPageView,
+  writeAnalyticsConsent,
+  type AnalyticsConsent,
+} from "@/lib/analytics";
 
-const CONSENT_KEY = "arena-kyvora-analytics-consent";
-
+/**
+ * LGPD consent banner + GA4/Meta loaders.
+ * Scripts load only after explicit grant and when env enables analytics + IDs.
+ */
 export function AnalyticsConsent() {
   const [visible, setVisible] = useState(false);
-  const [consent, setConsent] = useState<"unknown" | "granted" | "denied">(
-    "unknown",
-  );
-
-  const analyticsReady =
-    env.enableAnalytics &&
-    Boolean(env.googleAnalyticsId || env.metaPixelId);
+  const [consent, setConsent] = useState<AnalyticsConsent>("unknown");
+  const analyticsReady = isAnalyticsRuntimeAllowed();
 
   useEffect(() => {
     if (!analyticsReady) return;
-    const stored = window.localStorage.getItem(CONSENT_KEY);
-    if (stored === "granted" || stored === "denied") {
-      setConsent(stored);
-      setVisible(false);
-      return;
-    }
-    setVisible(true);
+    const stored = readAnalyticsConsent();
+    setConsent(stored);
+    setVisible(stored === "unknown");
   }, [analyticsReady]);
 
   if (!analyticsReady) return null;
 
   const grant = () => {
-    window.localStorage.setItem(CONSENT_KEY, "granted");
+    writeAnalyticsConsent("granted");
     setConsent("granted");
     setVisible(false);
+    // First page view after consent (gtag may not be ready yet; SpaTracker also fires).
+    queueMicrotask(() => {
+      trackPageView(window.location.pathname + window.location.search);
+    });
   };
 
   const deny = () => {
-    window.localStorage.setItem(CONSENT_KEY, "denied");
+    writeAnalyticsConsent("denied");
     setConsent("denied");
     setVisible(false);
   };
@@ -54,8 +58,20 @@ export function AnalyticsConsent() {
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${env.googleAnalyticsId}', { anonymize_ip: true });
+              if (!window.__arenaGaConfigured) {
+                window.__arenaGaConfigured = true;
+                gtag('js', new Date());
+                gtag('consent', 'default', {
+                  analytics_storage: 'granted',
+                  ad_storage: 'denied',
+                  ad_user_data: 'denied',
+                  ad_personalization: 'denied'
+                });
+                gtag('config', '${env.googleAnalyticsId}', {
+                  anonymize_ip: true,
+                  send_page_view: false
+                });
+              }
             `}
           </Script>
         </>
@@ -70,7 +86,6 @@ export function AnalyticsConsent() {
             t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
             (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
             fbq('init', '${env.metaPixelId}');
-            fbq('track', 'PageView');
           `}
         </Script>
       ) : null}
@@ -84,7 +99,7 @@ export function AnalyticsConsent() {
           <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-relaxed text-muted">
               Usamos analytics apenas com o seu consentimento, para entender o
-              interesse no lançamento do Arena Kyvora. Você pode recusar.
+              uso do Arena Kyvora. Você pode recusar a qualquer momento.
             </p>
             <div className="flex shrink-0 gap-2">
               <Button variant="ghost" onClick={deny}>

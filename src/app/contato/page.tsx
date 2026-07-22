@@ -4,7 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
+import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Contato",
@@ -35,18 +36,20 @@ export default function ContactPage() {
               Voltar ao início
             </Button>
           </div>
-          <p className="mt-6 text-sm text-muted">
-            Também é possível acessar o{" "}
-            <Link
-              href={env.gestaoUrl}
-              className="font-medium text-ink underline-offset-4 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Kyvora Gestão
-            </Link>
-            .
-          </p>
+          {hasGestaoUrl() ? (
+            <p className="mt-6 text-sm text-muted">
+              Também é possível acessar o{" "}
+              <Link
+                href={env.gestaoUrl}
+                className="font-semibold text-kyvora underline-offset-4 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {brand.gestaoName}
+              </Link>
+              .
+            </p>
+          ) : null}
         </Container>
       </main>
       <Footer />

@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import { env } from "@/config/env";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  if (!env.allowIndexing) {
+    return [];
+  }
+
   const base = env.siteUrl.replace(/\/$/, "");
 
   return [

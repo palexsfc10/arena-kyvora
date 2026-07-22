@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!.env.hml.example
 
 # playwright
 /test-results/
@@ -40,6 +41,10 @@ yarn-error.log*
 /blob-report/
 /playwright/.cache/
 /screenshots/
+/artifacts/playwright/
+**/storageState*.json
+e2e/.auth/
+playwright/.auth/
 
 # vercel
 .vercel
