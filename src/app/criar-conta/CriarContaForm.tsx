@@ -51,6 +51,11 @@ export default function CriarContaForm() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError("Este e-mail já possui conta. Entre ou recupere sua senha.");
+      } else if (err instanceof ApiError && err.status === 429) {
+        setError(
+          err.message ||
+            "Muitas tentativas de cadastro neste horário. Aguarde alguns minutos e tente novamente.",
+        );
       } else {
         setError(
           err instanceof ApiError

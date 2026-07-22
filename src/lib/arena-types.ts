@@ -36,10 +36,10 @@ export type ChallengeContextState =
  */
 export type ChallengeContext = {
   state: ChallengeContextState;
-  challenge_id: string;
+  challenge_id: string | null;
   proposed_date: string | null;
   proposed_time: string | null;
-  direction: "sent" | "received" | string;
+  direction: "sent" | "received" | string | null;
 };
 
 export type AvailabilityItem = {
@@ -230,9 +230,15 @@ export type PaginatedNotifications = Paginated<ArenaNotificationItem> & {
   unread_count: number;
 };
 
+export type ApiFieldError = {
+  field?: string;
+  message?: string;
+};
+
 export type ApiSuccess<T> = {
   success: boolean;
   message: string;
   data?: T;
   error_code?: string;
+  errors?: ApiFieldError[];
 };

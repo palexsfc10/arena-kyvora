@@ -16,6 +16,12 @@ const TYPE_OPTIONS: Array<{ value: ArenaFeedbackType; label: string }> = [
   { value: "compliment", label: "Elogio" },
 ];
 
+/** Keep in sync with backend CreateFeedbackRequest (schemas/arena.py). */
+const MIN_SUBJECT = 3;
+const MAX_SUBJECT = 200;
+const MIN_BODY = 10;
+const MAX_BODY = 4000;
+
 export default function FeedbackPage() {
   const { selectedTeam } = useAuth();
   const [feedbackType, setFeedbackType] = useState<ArenaFeedbackType>("suggestion");
@@ -24,22 +30,36 @@ export default function FeedbackPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    subject?: string;
+    body?: string;
+  }>({});
 
-  // Guards against double-submit from rapid double clicks / double taps,
-  // in addition to the disabled button state below.
   const inFlightRef = useRef(false);
+
+  function validateClient(): boolean {
+    const next: { subject?: string; body?: string } = {};
+    const trimmedSubject = subject.trim();
+    const trimmedBody = body.trim();
+    if (trimmedSubject.length < MIN_SUBJECT) {
+      next.subject = `O assunto precisa ter pelo menos ${MIN_SUBJECT} caracteres.`;
+    }
+    if (trimmedBody.length < MIN_BODY) {
+      next.body = `A mensagem precisa ter pelo menos ${MIN_BODY} caracteres.`;
+    }
+    setFieldErrors(next);
+    return Object.keys(next).length === 0;
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (inFlightRef.current || submitting) return;
-    if (!subject.trim() || !body.trim()) {
-      setError("Preencha o assunto e a mensagem.");
-      return;
-    }
-    inFlightRef.current = true;
-    setSubmitting(true);
     setError(null);
     setSuccess(false);
+    if (!validateClient()) return;
+
+    inFlightRef.current = true;
+    setSubmitting(true);
     trackEvent("arena_feedback_started");
     try {
       await arenaApi.submitFeedback({
@@ -52,6 +72,7 @@ export default function FeedbackPage() {
       setSuccess(true);
       setSubject("");
       setBody("");
+      setFieldErrors({});
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Falha ao enviar sua mensagem.");
     } finally {
@@ -68,7 +89,7 @@ export default function FeedbackPage() {
         mensagem vai direto para o time do Arena.
       </p>
 
-      <form onSubmit={onSubmit} className="mt-6 max-w-lg space-y-4">
+      <form onSubmit={onSubmit} className="mt-6 max-w-lg space-y-4" noValidate>
         <label className="block text-sm">
           <span className="mb-1 block text-muted">Tipo</span>
           <select
@@ -88,25 +109,57 @@ export default function FeedbackPage() {
           <span className="mb-1 block text-muted">Assunto</span>
           <input
             required
-            maxLength={140}
+            minLength={MIN_SUBJECT}
+            maxLength={MAX_SUBJECT}
             value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+            onChange={(e) => {
+              setSubject(e.target.value);
+              if (fieldErrors.subject) {
+                setFieldErrors((prev) => ({ ...prev, subject: undefined }));
+              }
+            }}
             className="w-full rounded-md border border-line bg-white px-3 py-2.5"
             placeholder="Resuma em poucas palavras"
+            aria-invalid={Boolean(fieldErrors.subject)}
+            aria-describedby={fieldErrors.subject ? "feedback-subject-error" : "feedback-subject-hint"}
           />
+          <p id="feedback-subject-hint" className="mt-1 text-xs text-muted">
+            Mínimo de {MIN_SUBJECT} caracteres.
+          </p>
+          {fieldErrors.subject ? (
+            <p id="feedback-subject-error" className="mt-1 text-sm text-red-700" role="alert">
+              {fieldErrors.subject}
+            </p>
+          ) : null}
         </label>
 
         <label className="block text-sm">
           <span className="mb-1 block text-muted">Mensagem</span>
           <textarea
             required
-            maxLength={2000}
+            minLength={MIN_BODY}
+            maxLength={MAX_BODY}
             rows={6}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => {
+              setBody(e.target.value);
+              if (fieldErrors.body) {
+                setFieldErrors((prev) => ({ ...prev, body: undefined }));
+              }
+            }}
             className="w-full rounded-md border border-line bg-white px-3 py-2.5"
             placeholder="Descreva com o máximo de detalhes possível"
+            aria-invalid={Boolean(fieldErrors.body)}
+            aria-describedby={fieldErrors.body ? "feedback-body-error" : "feedback-body-hint"}
           />
+          <p id="feedback-body-hint" className="mt-1 text-xs text-muted">
+            Mínimo de {MIN_BODY} caracteres ({body.trim().length}/{MIN_BODY}).
+          </p>
+          {fieldErrors.body ? (
+            <p id="feedback-body-error" className="mt-1 text-sm text-red-700" role="alert">
+              {fieldErrors.body}
+            </p>
+          ) : null}
         </label>
 
         {error ? (

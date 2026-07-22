@@ -5,13 +5,38 @@ import type { ApiSuccess } from "@/lib/arena-types";
 export class ApiError extends Error {
   status: number;
   errorCode?: string;
+  fieldErrors?: Array<{ field?: string; message?: string }>;
 
-  constructor(message: string, status: number, errorCode?: string) {
+  constructor(
+    message: string,
+    status: number,
+    errorCode?: string,
+    fieldErrors?: Array<{ field?: string; message?: string }>,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.errorCode = errorCode;
+    this.fieldErrors = fieldErrors;
   }
+}
+
+export function composeApiErrorMessage(
+  baseMessage: string,
+  fieldErrors?: Array<{ field?: string; message?: string }>,
+): string {
+  const fieldSummary = fieldErrors
+    ?.map((item) => item.message)
+    .filter((msg): msg is string => Boolean(msg))
+    .join(" ");
+  // Prefer actionable field details over a bare "Erro de validação."
+  if (baseMessage === "Erro de validação." && fieldSummary) {
+    return fieldSummary;
+  }
+  if (fieldSummary && !baseMessage.includes(fieldSummary)) {
+    return `${baseMessage} ${fieldSummary}`.trim();
+  }
+  return baseMessage;
 }
 
 type RequestOptions = {
@@ -88,11 +113,10 @@ export async function apiRequest<T>(
     if (response.status === 401) {
       clearAccessToken();
     }
-    throw new ApiError(
-      json?.message ?? "Não foi possível concluir a solicitação.",
-      response.status,
-      json?.error_code,
-    );
+    const fieldErrors = Array.isArray(json?.errors) ? json.errors : undefined;
+    const baseMessage = json?.message ?? "Não foi possível concluir a solicitação.";
+    const message = composeApiErrorMessage(baseMessage, fieldErrors);
+    throw new ApiError(message, response.status, json?.error_code, fieldErrors);
   }
 
   // Success envelopes may omit `data` (e.g. next-match with no result).

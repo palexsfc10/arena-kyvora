@@ -28,6 +28,7 @@ type CommonProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   "data-analytics"?: string;
+  "data-testid"?: string;
 };
 
 type ButtonAsButton = CommonProps &
@@ -63,8 +64,14 @@ export function Button(props: ButtonProps) {
   );
 
   if ("href" in props && props.href) {
-    const { href, target, rel, onClick, "data-analytics": analytics } =
-      props as ButtonAsLink;
+    const {
+      href,
+      target,
+      rel,
+      onClick,
+      "data-analytics": analytics,
+      "data-testid": testId,
+    } = props as ButtonAsLink;
     return (
       <Link
         href={href}
@@ -73,6 +80,7 @@ export function Button(props: ButtonProps) {
         rel={rel}
         onClick={onClick}
         data-analytics={analytics}
+        data-testid={testId}
       >
         {children}
       </Link>

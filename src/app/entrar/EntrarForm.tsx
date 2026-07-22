@@ -39,11 +39,18 @@ export default function EntrarForm() {
       trackEvent("login_completed");
       router.replace(routeAfterSession(session));
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível entrar. Verifique e-mail e senha.",
-      );
+      if (err instanceof ApiError && err.status === 429) {
+        setError(
+          err.message ||
+            "Muitas tentativas de login. Aguarde alguns minutos e tente novamente.",
+        );
+      } else {
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "Não foi possível entrar. Verifique e-mail e senha.",
+        );
+      }
     } finally {
       setSubmitting(false);
     }
