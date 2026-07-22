@@ -35,14 +35,20 @@ export class ExplorePages {
     date: string;
     time?: string;
     phone: string;
+    teamName?: string;
   }) {
-    const challengeBtn = this.page.getByRole("button", { name: /Desafiar/i }).first();
+    const scope = opts.teamName
+      ? this.page.getByTestId("explore-card").filter({ hasText: opts.teamName }).first()
+      : this.page.locator("body");
+    const challengeBtn = scope.getByRole("button", { name: /Desafiar/i }).first();
     await expect(challengeBtn).toBeVisible({ timeout: 25_000 });
     await challengeBtn.click();
-    await this.page.locator('input[type="date"]').fill(opts.date);
-    const timeInput = this.page.locator('input[type="time"]');
-    if (await timeInput.count()) {
-      await timeInput.fill(opts.time ?? "20:00");
+    await this.page.getByRole("textbox", { name: /Data proposta/i }).fill(opts.date);
+    const timeInput = this.page.getByLabel(/Horário|Hora/i).or(
+      this.page.locator('input[type="time"]'),
+    );
+    if (await timeInput.first().count()) {
+      await timeInput.first().fill(opts.time ?? "20:00");
     }
     const phone = this.page.getByLabel(/Telefone|WhatsApp|Contato/i).or(
       this.page.locator('input[type="tel"], input[name*="phone"]'),

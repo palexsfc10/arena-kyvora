@@ -5,9 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { assertNoPageHorizontalOverflow } from "../helpers/viewport";
-import { requireE2ePassword } from "../helpers/demoUsers";
+import { ensureTeamForToken, registerEphemeralAndLogin } from "../helpers/bootstrap";
 
-const API = process.env.PLAYWRIGHT_API_BASE_URL ?? "https://hml-api.kyvoraapp.com.br";
 const ACCESS_TOKEN_KEY = "arena_kyvora_access_token";
 const OUT = path.join(
   process.cwd(),
@@ -20,50 +19,16 @@ const OUT = path.join(
 
 async function bootstrap(page: Page) {
   const stamp = Date.now();
-  const email = `qa.explore.ux.${stamp}@example.com`;
-  const password = requireE2ePassword();
-  expect(
-    (
-      await fetch(`${API}/api/v1/arena/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "QA Explore UX",
-          email,
-          password,
-          confirm_password: password,
-          accept_terms: true,
-        }),
-      })
-    ).status,
-  ).toBe(201);
-  const login = await fetch(`${API}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+  const { token: registeredToken } = await registerEphemeralAndLogin({
+    name: "QA Explore UX",
+    emailPrefix: "qa.explore.ux",
   });
-  expect(login.status).toBe(200);
-  let token = ((await login.json()) as { data?: { access_token?: string } }).data
-    ?.access_token!;
-  const team = await fetch(`${API}/api/v1/arena/teams`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name: `UX Team ${stamp}`,
-      modality: "futsal",
-      city: "Osasco",
-      state: "SP",
-      participate_in_arena: true,
-      discoverable: true,
-      public_city: true,
-      idempotency_key: `qa-explore-ux-${stamp}`,
-    }),
+  const { token } = await ensureTeamForToken(registeredToken, {
+    name: `UX Team ${stamp}`,
+    city: "Osasco",
+    state: "SP",
+    idempotencyKey: `qa-explore-ux-${stamp}`,
   });
-  const teamJson = (await team.json()) as { data?: { access_token?: string } };
-  if (teamJson.data?.access_token) token = teamJson.data.access_token;
   await page.addInitScript(
     ([key, value]) => sessionStorage.setItem(key, value),
     [ACCESS_TOKEN_KEY, token] as [string, string],

@@ -37,8 +37,19 @@ export class AuthPages {
   }
 
   async login(email: string, password = requireE2ePassword()) {
-    await this.gotoLogin();
     for (let attempt = 1; attempt <= 4; attempt += 1) {
+      await this.page.context().clearCookies();
+      await this.page.goto("/entrar");
+      await this.page.evaluate(() => {
+        try {
+          sessionStorage.clear();
+          localStorage.clear();
+        } catch {
+          /* ignore */
+        }
+      });
+      await this.page.goto("/entrar");
+      await expect(this.page.getByRole("heading", { name: /^Entrar$/i })).toBeVisible();
       await this.page.getByLabel(/E-?mail/i).fill(email);
       await this.page.getByLabel(/^Senha$/i).fill(password);
       await this.page.getByRole("button", { name: /Entrar no Arena|^Entrar$/i }).click();
@@ -50,13 +61,44 @@ export class AuthPages {
         await this.page.waitForTimeout(20_000 * attempt);
         continue;
       }
-      await this.expectLoggedIntoApp();
-      return;
+      try {
+        await this.expectLoggedIntoApp();
+        return;
+      } catch {
+        const alertText = await this.page
+          .getByRole("alert")
+          .innerText()
+          .catch(() => "");
+        const url = this.page.url();
+        if (attempt === 4) {
+          throw new Error(
+            `UI login failed after ${attempt} attempts (url=${url}; alert=${alertText || "none"}). Check ARENA_E2E_PASSWORD matches the demo accounts.`,
+          );
+        }
+      }
     }
     throw new Error("Login bloqueado por rate-limit em HML após várias tentativas.");
   }
 
   async expectLoggedIntoApp() {
     await expect(this.page).toHaveURL(/\/app\//, { timeout: 30_000 });
+    await expect(this.page.locator("header")).toBeVisible({ timeout: 15_000 });
+    await expect(
+      this.page.getByRole("button", { name: /avisos/i }),
+    ).toBeVisible({ timeout: 15_000 });
+  }
+
+  async logout() {
+    const accountMenu = this.page.getByTestId("header-account-menu");
+    if (await accountMenu.isVisible().catch(() => false)) {
+      await accountMenu.click();
+      await this.page
+        .getByTestId("header-account-menu-panel")
+        .getByRole("menuitem", { name: /^Sair$/i })
+        .click();
+    } else {
+      await this.page.getByRole("button", { name: /^Sair$/i }).click();
+    }
+    await expect(this.page).toHaveURL(/\/entrar|\/$/, { timeout: 20_000 });
   }
 }

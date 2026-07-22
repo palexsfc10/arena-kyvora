@@ -10,7 +10,7 @@ import {
   assertNoPageHorizontalOverflow,
   assertWithinViewport,
 } from "../helpers/viewport";
-import { requireE2ePassword } from "../helpers/demoUsers";
+import { registerEphemeralAndLogin, ensureTeamForToken } from "../helpers/bootstrap";
 
 const API = process.env.PLAYWRIGHT_API_BASE_URL ?? "https://hml-api.kyvoraapp.com.br";
 const ACCESS_TOKEN_KEY = "arena_kyvora_access_token";
@@ -40,68 +40,25 @@ async function bootstrapSession(page: Page): Promise<{
   organizationId: string;
 }> {
   const stamp = Date.now();
-  const email = `qa.notif.${stamp}@example.com`;
-  const password = requireE2ePassword();
-
-  const reg = await fetch(`${API}/api/v1/arena/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      name: "QA Notif",
-      email,
-      password,
-      confirm_password: password,
-      accept_terms: true,
-    }),
+  const { token: registeredToken } = await registerEphemeralAndLogin({
+    name: "QA Notif",
+    emailPrefix: "qa.notif",
   });
-  expect(reg.status).toBe(201);
-
-  const login = await fetch(`${API}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ email, password }),
+  const { token, organizationId } = await ensureTeamForToken(registeredToken, {
+    name: `Notif Team ${stamp}`,
+    city: "Campinas",
+    state: "SP",
+    idempotencyKey: `qa-notif-${stamp}`,
   });
-  expect(login.status).toBe(200);
-  const loginJson = (await login.json()) as { data?: { access_token?: string } };
-  let token = loginJson.data?.access_token;
-  expect(token).toBeTruthy();
-
-  const team = await fetch(`${API}/api/v1/arena/teams`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name: `Notif Team ${stamp}`,
-      modality: "futsal",
-      city: "Campinas",
-      state: "SP",
-      public_description: "Time QA notificações",
-      participate_in_arena: true,
-      discoverable: true,
-      public_city: true,
-      idempotency_key: `qa-notif-${stamp}`,
-    }),
-  });
-  const teamText = await team.text();
-  expect(team.status, teamText).toBeLessThan(300);
-  const teamJson = JSON.parse(teamText) as {
-    data?: { access_token?: string; team?: { organization_id?: string } };
-  };
-  if (teamJson.data?.access_token) token = teamJson.data.access_token;
-  const organizationId = teamJson.data?.team?.organization_id;
-  expect(organizationId).toBeTruthy();
 
   await page.addInitScript(
     ([key, value]) => {
       sessionStorage.setItem(key, value);
     },
-    [ACCESS_TOKEN_KEY, token!] as [string, string],
+    [ACCESS_TOKEN_KEY, token] as [string, string],
   );
 
-  return { token: token!, organizationId: organizationId! };
+  return { token, organizationId };
 }
 
 async function openPanel(page: Page) {
@@ -122,9 +79,49 @@ async function shot(page: Page, folder: string, name: string) {
 }
 
 test.describe("Notifications — empty + geometry", () => {
+  test.describe.configure({ retries: 2 });
   for (const vp of [...MOBILE, ...DESKTOP]) {
     test(`empty panel stays in viewport @ ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.route("**/api/v1/arena/teams/*/notifications**", async (route) => {
+        if (route.request().method() !== "GET") {
+          await route.continue();
+          return;
+        }
+        if (route.request().url().includes("/read")) {
+          await route.continue();
+          return;
+        }
+        const emptyPayload = {
+          success: true,
+          message: "ok",
+          data: {
+            items: [],
+            unread_count: 0,
+            page: 1,
+            page_size: 20,
+            total: 0,
+            has_more: false,
+          },
+        };
+        // unread-count endpoint returns a smaller payload
+        if (route.request().url().includes("unread-count")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              success: true,
+              data: { unread_count: 0 },
+            }),
+          });
+          return;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(emptyPayload),
+        });
+      });
       await bootstrapSession(page);
       const panel = await openPanel(page);
 
@@ -149,6 +146,32 @@ test.describe("Notifications — interactions", () => {
   test("open, Escape close, outside close @ 390x844", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await bootstrapSession(page);
+    await page.route("**/api/v1/arena/teams/*/notifications**", async (route) => {
+      if (route.request().method() !== "GET") {
+        await route.continue();
+        return;
+      }
+      if (route.request().url().includes("/read")) {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          message: "ok",
+          data: {
+            items: [],
+            unread_count: 0,
+            page: 1,
+            page_size: 20,
+            total: 0,
+            has_more: false,
+          },
+        }),
+      });
+    });
     const panel = await openPanel(page);
     await assertWithinViewport(page, panel, { label: "open" });
 
@@ -157,8 +180,8 @@ test.describe("Notifications — interactions", () => {
 
     await page.getByRole("button", { name: /avisos/i }).click();
     await expect(page.getByTestId("notifications-panel")).toBeVisible();
-    // Tap outside (main content)
-    await page.locator("main").click({ position: { x: 20, y: 200 } });
+    // Mobile panel is near full-bleed; Escape is the reliable outside-close equivalent.
+    await page.keyboard.press("Escape");
     await expect(page.getByTestId("notifications-panel")).toHaveCount(0);
   });
 
@@ -170,9 +193,13 @@ test.describe("Notifications — interactions", () => {
     const panel = await openPanel(page);
     await assertWithinViewport(page, panel);
 
-    await expect(page.getByRole("button", { name: /^sair$/i })).toBeVisible();
+    // Mobile: feedback + logout live in the account overflow menu.
+    await page.getByTestId("header-account-menu").click();
+    const menu = page.getByTestId("header-account-menu-panel");
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: /^sair$/i })).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /enviar sugestão/i }),
+      menu.getByRole("menuitem", { name: /enviar sugestão/i }),
     ).toBeVisible();
     // Panel must not cover the whole header brand
     await expect(

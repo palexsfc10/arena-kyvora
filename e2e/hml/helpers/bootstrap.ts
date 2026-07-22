@@ -66,11 +66,11 @@ export function verifyEmailInHmlDb(email: string): void {
 async function apiJsonWithRetry<T>(
   urlPath: string,
   init: RequestInit = {},
-  attempts = 5,
+  attempts = 8,
 ): Promise<{ status: number; body: T }> {
   let last = await apiJson<T>(urlPath, init);
   for (let i = 1; i < attempts && last.status === 429; i += 1) {
-    await new Promise((r) => setTimeout(r, 15_000 * i));
+    await new Promise((r) => setTimeout(r, 20_000 * i));
     last = await apiJson<T>(urlPath, init);
   }
   return last;
@@ -175,4 +175,115 @@ export async function loginViaApi(email: string): Promise<string> {
     throw new Error(`API login failed for ${maskEmail(email)} (${login.status})`);
   }
   return token;
+}
+
+/**
+ * Register a one-off HML user with 429-aware retries, then return an access token.
+ * Does not persist credentials to disk.
+ *
+ * When ARENA_E2E_USER_A_EMAIL is set, reuses that account (login-only) to avoid
+ * HML register rate limits during large suites.
+ */
+export async function registerEphemeralAndLogin(opts: {
+  name: string;
+  emailPrefix: string;
+}): Promise<{ email: string; token: string }> {
+  const reuseEmail = (process.env.ARENA_E2E_USER_A_EMAIL || "").trim();
+  if (reuseEmail) {
+    const token = await loginViaApi(reuseEmail);
+    return { email: reuseEmail, token };
+  }
+
+  const password = requireE2ePassword();
+  const stamp = Date.now();
+  const email = `${opts.emailPrefix}.${stamp}@example.com`;
+
+  const register = await apiJsonWithRetry<{
+    success?: boolean;
+    message?: string;
+  }>("/api/v1/arena/auth/register", {
+    method: "POST",
+    body: JSON.stringify({
+      name: opts.name,
+      email,
+      password,
+      confirm_password: password,
+      accept_terms: true,
+    }),
+  });
+
+  if (register.status !== 201 && register.status !== 200) {
+    throw new Error(
+      `Ephemeral register failed for ${maskEmail(email)}: HTTP ${register.status} ${JSON.stringify(register.body)}`,
+    );
+  }
+
+  try {
+    verifyEmailInHmlDb(email);
+  } catch {
+    // Optional — some HML setups allow login without verified email for fresh accounts.
+  }
+
+  const token = await loginViaApi(email);
+  return { email, token };
+}
+
+/**
+ * Ensures the token has a selected Arena team; creates one only when the session has none.
+ */
+export async function ensureTeamForToken(
+  token: string,
+  teamSeed: {
+    name: string;
+    city?: string;
+    state?: string;
+    idempotencyKey: string;
+  },
+): Promise<{ token: string; organizationId: string }> {
+  const session = await apiJsonWithRetry<{
+    data?: {
+      teams?: Array<{ organization_id: string; arena_enabled?: boolean }>;
+      selected_organization_id?: string | null;
+    };
+  }>("/api/v1/arena/session", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const teams = session.body?.data?.teams ?? [];
+  const selected = session.body?.data?.selected_organization_id;
+  if (selected) {
+    return { token, organizationId: selected };
+  }
+  if (teams[0]?.organization_id) {
+    return { token, organizationId: teams[0].organization_id };
+  }
+
+  const team = await apiJsonWithRetry<{
+    data?: { access_token?: string; team?: { organization_id?: string } };
+  }>("/api/v1/arena/teams", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      name: teamSeed.name,
+      modality: "futsal",
+      city: teamSeed.city ?? "Osasco",
+      state: teamSeed.state ?? "SP",
+      participate_in_arena: true,
+      discoverable: true,
+      public_city: true,
+      idempotency_key: teamSeed.idempotencyKey,
+    }),
+  });
+  if (team.status >= 300) {
+    throw new Error(
+      `Team create failed: HTTP ${team.status} ${JSON.stringify(team.body)}`,
+    );
+  }
+  const nextToken = team.body?.data?.access_token ?? token;
+  const organizationId = team.body?.data?.team?.organization_id;
+  if (!organizationId) {
+    throw new Error("Team create did not return organization_id");
+  }
+  return { token: nextToken, organizationId };
 }

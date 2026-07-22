@@ -265,7 +265,8 @@ test.describe("Growth UX + challenge card actions", () => {
     await page.goto("/app/explorar");
     await expect(page.getByRole("heading", { name: /Explorar jogos/i })).toBeVisible();
     await expect(page.getByTestId("gestao-promo-explore-mobile-top")).toBeVisible();
-    await expect(page.getByTestId("gestao-promo-login")).toHaveCount(0);
+    // Desktop/tablet login promo remains in the DOM but is CSS-hidden below md.
+    await expect(page.getByTestId("gestao-promo-login")).toBeHidden();
     await expect(page.getByTestId("gestao-promo-card")).toBeVisible();
     await assertNoPageHorizontalOverflow(page);
     const headerCta = page.getByTestId("gestao-header-cta-mobile");

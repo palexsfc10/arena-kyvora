@@ -6,13 +6,24 @@ export class TeamPages {
 
   async createTeamIfNeeded(user: DemoUser) {
     await this.page.goto("/app/meu-time");
+    if (/\/entrar/i.test(this.page.url())) {
+      throw new Error(
+        "createTeamIfNeeded: redirected to /entrar — session missing after login.",
+      );
+    }
     const hasTeam = await this.page
       .getByRole("heading", { name: /^Meu time$/i })
-      .isVisible()
+      .waitFor({ state: "visible", timeout: 15_000 })
+      .then(() => true)
       .catch(() => false);
     if (hasTeam) return;
 
     await this.page.goto("/app/criar-time");
+    if (/\/entrar/i.test(this.page.url())) {
+      throw new Error(
+        "createTeamIfNeeded: /app/criar-time redirected to /entrar — session missing.",
+      );
+    }
     await expect(
       this.page.getByRole("heading", { name: /^Criar meu time$/i }),
     ).toBeVisible();
@@ -21,9 +32,13 @@ export class TeamPages {
     await this.page.getByRole("textbox", { name: /^Cidade$/i }).fill(user.city);
     await this.page.getByRole("textbox", { name: /UF/i }).fill(user.state);
     await this.page.getByRole("button", { name: /Criar time e continuar/i }).click();
-    const err = this.page.getByRole("alert");
-    if (await err.isVisible().catch(() => false)) {
-      throw new Error(`Falha UI ao criar time: ${await err.innerText()}`);
+    // Ignore Next.js route announcer alerts; only form errors use role=alert in main.
+    const formError = this.page.locator("main [role='alert']");
+    if (await formError.isVisible().catch(() => false)) {
+      const text = (await formError.innerText()).trim();
+      if (text) {
+        throw new Error(`Falha UI ao criar time: ${text}`);
+      }
     }
     await expect(
       this.page.getByRole("heading", { name: /^Criar meu time$/i }),
