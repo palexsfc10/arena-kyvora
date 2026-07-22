@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { env, hasGestaoUrl } from "@/config/env";
+import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Contato",
@@ -40,11 +41,11 @@ export default function ContactPage() {
               Também é possível acessar o{" "}
               <Link
                 href={env.gestaoUrl}
-                className="font-medium text-ink underline-offset-4 hover:underline"
+                className="font-semibold text-kyvora underline-offset-4 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Kyvora Gestão
+                {brand.gestaoName}
               </Link>
               .
             </p>

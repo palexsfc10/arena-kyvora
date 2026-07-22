@@ -94,7 +94,7 @@ export default function PrivacyPage() {
           </p>
 
           <h2 className="mt-10 font-display text-xl font-semibold text-ink">
-            6. Relação com o Kyvora Gestão
+            6. Relação com o Kyvora Gestão de Times
           </h2>
           <p className="mt-3 text-base leading-relaxed text-muted">
             Arena e Gestão compartilham autenticação e entidade de time quando

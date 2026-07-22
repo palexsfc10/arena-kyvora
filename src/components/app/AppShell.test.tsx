@@ -122,7 +122,7 @@ describe("AppShell authenticated shell", () => {
     expect(desktop?.closest("header")).toBeTruthy();
     expect(mobile?.closest('nav[aria-label="Navegação móvel"]')).toBeTruthy();
 
-    expect(desktop?.textContent).toContain("Kyvora Gestão");
+    expect(desktop?.textContent).toContain("Kyvora Gestão de Times");
     expect(desktop?.textContent).toContain("Teste 7 dias grátis");
     expect(desktop?.textContent).not.toContain("Precisa organizar seu time?");
 

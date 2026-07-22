@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "outline";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "kyvora";
 type ButtonSize = "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -13,6 +13,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-transparent text-ink hover:bg-surface focus-visible:ring-ink/40",
   outline:
     "border border-line bg-transparent text-ink hover:border-ink/40 hover:bg-surface focus-visible:ring-ink/40",
+  kyvora:
+    "kyvora-paid-cta border focus-visible:ring-kyvora",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

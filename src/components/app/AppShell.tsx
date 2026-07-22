@@ -238,11 +238,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               data-cta-variant="compact"
               className="kyvora-paid-cta block w-full rounded-md border px-2.5 py-1.5 text-left transition-colors focus-visible:outline-none active:brightness-95"
               onClick={() => trackGestaoCta("mobile")}
-              aria-label="Kyvora Gestão de Times — teste grátis por 7 dias. Abre em nova aba"
+              aria-label={`${brand.gestaoName} — teste grátis por 7 dias. Abre em nova aba`}
             >
               <span className="flex min-h-9 w-full items-center gap-2">
                 <span className="min-w-0 flex-1 text-xs font-semibold leading-tight tracking-tight">
-                  Kyvora Gestão de Times
+                  {brand.gestaoName}
                 </span>
                 <span className="kyvora-paid-cta-seal shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide">
                   Teste grátis por 7 dias

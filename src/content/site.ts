@@ -34,7 +34,7 @@ export const brand = {
   shortName: "Arena",
   tagline: "Encontre times. Marque jogos. Viva o esporte.",
   ecosystem: "Kyvora",
-  gestaoName: "Kyvora Gestão",
+  gestaoName: "Kyvora Gestão de Times",
 } as const;
 
 export const seo = {
@@ -85,7 +85,7 @@ export const featuresIntro = {
   id: "funcionalidades",
   title: "Tudo para encontrar o próximo adversário",
   subtitle:
-    "Ferramentas prontas para aproximar times amadores — sem reinventar o que você já organiza no Kyvora Gestão.",
+    "Ferramentas prontas para aproximar times amadores — sem reinventar o que você já organiza no Kyvora Gestão de Times.",
 } as const;
 
 export const features: FeatureItem[] = [
@@ -135,7 +135,7 @@ export const features: FeatureItem[] = [
     id: "integracao",
     title: "Integração com o Kyvora",
     description:
-      "Use a mesma conta e a mesma entidade de time da Gestão, sem duplicar cadastro.",
+      "Use a mesma conta e a mesma entidade de time do Kyvora Gestão de Times, sem duplicar cadastro.",
     icon: Link2,
   },
 ];
@@ -168,9 +168,10 @@ export const howItWorks = {
 
 export const ecosystem = {
   id: "ecossistema",
-  title: "Arena e Gestão, no mesmo ecossistema",
-  subtitle:
-    "O Arena aproxima times e cria oportunidades de jogos. O Kyvora Gestão organiza o time nos bastidores.",
+  title: "Arena e Gestão de Times, no mesmo ecossistema",
+  subtitleBefore:
+    "O Arena aproxima times e cria oportunidades de jogos. O ",
+  subtitleAfter: " organiza o time nos bastidores.",
   points: [
     {
       id: "arena",
@@ -179,7 +180,7 @@ export const ecosystem = {
     },
     {
       id: "gestao",
-      title: "Kyvora Gestão",
+      title: "Kyvora Gestão de Times",
       text: "Operação do time: elenco, partidas, estatísticas e finanças.",
     },
     {
@@ -197,7 +198,7 @@ export const finalCta = {
     "O Arena Kyvora é gratuito. Crie sua conta, ative o perfil do time e comece a explorar adversários.",
   primaryLabel: "Criar conta grátis",
   primaryEvent: "cta_final_criar_conta",
-  secondaryLabel: "Conhecer Kyvora Gestão",
+  secondaryLabel: "Conhecer Kyvora Gestão de Times",
   secondaryEvent: "cta_final_gestao",
 } as const;
 

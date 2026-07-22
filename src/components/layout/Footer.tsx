@@ -41,7 +41,7 @@ export function Footer() {
                     href={env.gestaoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-canvas/80 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    className="text-sm font-semibold text-[#9bb4f0] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kyvora"
                   >
                     {brand.gestaoName}
                   </a>

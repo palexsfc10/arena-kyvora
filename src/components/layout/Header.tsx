@@ -70,7 +70,7 @@ export function Header() {
               href={env.gestaoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              className="text-sm font-semibold text-kyvora transition-colors hover:text-kyvora-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kyvora focus-visible:ring-offset-2"
               onClick={() => trackEvent("nav_gestao")}
             >
               {brand.gestaoName}
@@ -133,7 +133,7 @@ export function Header() {
               href={env.gestaoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-md px-3 py-3 text-base font-medium text-ink hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="rounded-md px-3 py-3 text-base font-semibold text-kyvora hover:bg-kyvora-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kyvora"
               onClick={() => {
                 trackEvent("nav_gestao_mobile");
                 close();

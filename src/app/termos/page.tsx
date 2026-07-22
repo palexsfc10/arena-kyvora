@@ -34,7 +34,7 @@ export default function TermsPage() {
           <p className="mt-3 text-base leading-relaxed text-muted">
             O Arena é uma comunidade gratuita para times amadores se
             apresentarem, publicarem disponibilidade e organizarem desafios. Não
-            substitui o Kyvora Gestão nem oferece serviços financeiros.
+            substitui o Kyvora Gestão de Times nem oferece serviços financeiros.
           </p>
 
           <h2 className="mt-10 font-display text-xl font-semibold text-ink">

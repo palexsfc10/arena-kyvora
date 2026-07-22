@@ -37,9 +37,9 @@ export function FinalCta() {
             {hasGestaoUrl() ? (
               <Button
                 href={env.gestaoUrl}
-                variant="outline"
+                variant="kyvora"
                 size="lg"
-                className="border-white/25 text-canvas hover:border-accent hover:bg-transparent hover:text-accent focus-visible:ring-accent focus-visible:ring-offset-ink"
+                className="focus-visible:ring-offset-ink"
                 target="_blank"
                 rel="noopener noreferrer"
                 data-analytics={finalCta.secondaryEvent}
