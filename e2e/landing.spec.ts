@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Arena Kyvora landing", () => {
-  test("renders core value proposition and coming soon features", async ({
+  test("renders core value proposition and shipped features", async ({
     page,
   }) => {
     await page.goto("/");
@@ -21,28 +21,33 @@ test.describe("Arena Kyvora landing", () => {
     await expect(page.locator('a[href="/entrar"]').first()).toBeAttached();
     await expect(page.locator('a[href="/criar-conta"]').first()).toBeAttached();
 
+    await expect(page.getByText("Em desenvolvimento")).toHaveCount(0);
+    await expect(page.getByText("Em breve")).toHaveCount(0);
+    await expect(page.getByText("Não operacional")).toHaveCount(0);
+
     await page.goto("/#funcionalidades");
     await expect(page.locator("#funcionalidades")).toBeInViewport();
-
-    const comingSoon = page.getByText("Em breve");
-    await expect(comingSoon.first()).toBeVisible();
-    expect(await comingSoon.count()).toBeGreaterThanOrEqual(7);
+    await expect(page.getByText("Desafie outros times")).toBeVisible();
 
     await expect(page.getByText("ao vivo", { exact: false })).toHaveCount(0);
     await expect(page.getByText("Quem decide")).toHaveCount(0);
   });
 
-  test("final CTA and legal placeholders are reachable", async ({ page }) => {
+  test("final CTA and legal pages are reachable", async ({ page }) => {
     await page.goto("/");
 
-    await page.goto("/#acompanhar");
-    await expect(page.locator("#acompanhar")).toBeInViewport();
+    await page.goto("/#comecar");
+    await expect(page.locator("#comecar")).toBeInViewport();
 
     await page.goto("/privacidade");
     await expect(
       page.getByRole("heading", { name: "Política de Privacidade" }),
     ).toBeVisible();
-    await expect(page.getByText("Pendência documental")).toBeVisible();
+    await expect(page.getByText("Documento vigente")).toBeVisible();
+    await expect(page.getByText("Pendência documental")).toHaveCount(0);
+
+    await page.goto("/termos");
+    await expect(page.getByRole("heading", { name: "Termos de Uso" })).toBeVisible();
 
     await page.goto("/contato");
     await expect(page.getByRole("heading", { name: "Contato" })).toBeVisible();
@@ -78,20 +83,8 @@ test.describe("Arena onboarding entry", () => {
   }) => {
     await page.goto("/entrar");
     await expect(page.getByRole("heading", { name: /^Entrar$/i })).toBeVisible();
-    await expect(page.getByLabel(/E-mail/i)).toBeVisible();
 
     await page.goto("/app/explorar");
-    await expect(page).toHaveURL(/\/entrar/);
-  });
-
-  test("criar conta and protected create-team routes", async ({ page }) => {
-    await page.goto("/criar-conta");
-    await expect(
-      page.getByRole("heading", { name: /Criar conta grátis/i }),
-    ).toBeVisible();
-    await expect(page.getByLabel(/^Nome$/i)).toBeVisible();
-
-    await page.goto("/app/criar-time");
     await expect(page).toHaveURL(/\/entrar/);
   });
 });

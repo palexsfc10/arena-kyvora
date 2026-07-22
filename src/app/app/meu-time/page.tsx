@@ -246,7 +246,7 @@ export default function MeuTimePage() {
               />
             </label>
             <p className="text-xs text-muted">
-              Elenco e estatísticas públicas permanecem desabilitados neste MVP.
+              Elenco e estatísticas públicas ainda não estão disponíveis no Arena.
             </p>
             {session?.can_manage_selected ? (
               <Button type="submit" disabled={submitting}>

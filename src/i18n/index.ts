@@ -8,4 +8,4 @@ export const defaultLocale = "pt-BR" as const;
 
 export type Locale = typeof defaultLocale;
 
-export { brand, seo, navigation, features, howItWorks, ecosystem, finalCta, footer, hero, statusLabel } from "@/content/site";
+export { brand, seo, navigation, features, howItWorks, ecosystem, finalCta, footer, hero } from "@/content/site";

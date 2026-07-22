@@ -100,6 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       if (err instanceof ApiError && err.status === 401) {
         setStatus("unauthenticated");
+      } else if (
+        err instanceof ApiError &&
+        err.status === 403 &&
+        (err.errorCode === "ARENA_USER_BLOCKED" ||
+          /bloqueada no Arena/i.test(err.message))
+      ) {
+        setStatus("unauthenticated");
+        setError(
+          "Sua conta está temporariamente bloqueada no Arena. A Gestão Kyvora não é afetada.",
+        );
       } else {
         setStatus("error");
         setError(

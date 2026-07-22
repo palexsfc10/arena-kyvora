@@ -50,8 +50,8 @@ export const metadata: Metadata = {
     description: seo.description,
   },
   robots: {
-    index: true,
-    follow: true,
+    index: env.allowIndexing,
+    follow: env.allowIndexing,
   },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],

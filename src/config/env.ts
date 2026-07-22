@@ -42,6 +42,12 @@ export const env = {
   metaPixelId: readPublic(process.env.NEXT_PUBLIC_META_PIXEL_ID),
   enableAnalytics:
     readPublic(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS, "false") === "true",
+  /**
+   * Production indexing must be explicitly enabled.
+   * HML and unset builds stay noindex (safe default for homologation).
+   */
+  allowIndexing:
+    readPublic(process.env.NEXT_PUBLIC_ALLOW_INDEXING, "false") === "true",
 } as const;
 
 export type PublicEnv = typeof env;

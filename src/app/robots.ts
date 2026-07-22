@@ -4,6 +4,16 @@ import { env } from "@/config/env";
 export default function robots(): MetadataRoute.Robots {
   const base = env.siteUrl.replace(/\/$/, "");
 
+  if (!env.allowIndexing) {
+    return {
+      rules: {
+        userAgent: "*",
+        disallow: "/",
+      },
+      host: base || undefined,
+    };
+  }
+
   return {
     rules: {
       userAgent: "*",

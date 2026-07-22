@@ -20,7 +20,6 @@ export type FeatureItem = {
   title: string;
   description: string;
   icon: LucideIcon;
-  status: "coming-soon";
 };
 
 export type StepItem = {
@@ -41,48 +40,52 @@ export const brand = {
 export const seo = {
   title: "Arena Kyvora — Encontre times e marque jogos amistosos",
   description:
-    "Encontre times da sua região, desafie adversários e organize amistosos de futebol e futsal amador. Arena Kyvora: em breve.",
+    "Comunidade gratuita para times amadores se encontrarem, publicarem disponibilidade e organizarem desafios de futebol e futsal.",
   keywords: [
     "encontrar times para amistoso",
     "encontrar adversários futebol",
     "marcar jogos entre times",
     "times de futebol amador",
     "futsal amador",
-    "jogos amistosos na região",
+    "jogos amistosos",
     "Arena Kyvora",
   ],
 } as const;
 
 export const navigation: NavItem[] = [
   { id: "funcionalidades", label: "Funcionalidades", href: "#funcionalidades" },
-  { id: "como-funcionara", label: "Como funcionará", href: "#como-funcionara" },
+  { id: "como-funciona", label: "Como funciona", href: "#como-funciona" },
   { id: "ecossistema", label: "Ecossistema", href: "#ecossistema" },
 ];
 
 export const hero = {
-  eyebrow: "Em desenvolvimento",
+  eyebrow: "Gratuito para times amadores",
   title: "Seu próximo jogo começa aqui.",
   subtitle:
-    "Encontre times da sua região, descubra oportunidades de partidas e conecte seu time a novos adversários.",
+    "Publique a disponibilidade do seu time, encontre adversários e organize desafios — sem misturar com a gestão interna do clube.",
   primaryCta: {
-    label: "Conhecer funcionalidades",
-    href: "#funcionalidades",
-    event: "cta_hero_features",
+    label: "Criar conta grátis",
+    href: "/criar-conta",
+    event: "cta_hero_criar_conta",
   },
   secondaryCta: {
-    label: "Acessar Kyvora Gestão",
-    hrefKey: "gestao" as const,
-    event: "cta_hero_gestao",
+    label: "Entrar",
+    href: "/entrar",
+    event: "cta_hero_entrar",
   },
-  previewLabel: "Prévia conceitual",
-  previewCaption: "Busca e desafios chegarão com o lançamento.",
+  previewLabel: "O que você faz no Arena",
+  previewItems: [
+    { label: "Explorar", text: "Veja times disponíveis por cidade e modalidade." },
+    { label: "Publicar", text: "Informe quando seu time pode jogar." },
+    { label: "Desafiar", text: "Envie e responda desafios com data e local." },
+  ],
 } as const;
 
 export const featuresIntro = {
   id: "funcionalidades",
   title: "Tudo para encontrar o próximo adversário",
   subtitle:
-    "Recursos planejados para aproximar times amadores e viabilizar novos jogos — sem reinventar o que você já organiza no Kyvora Gestão.",
+    "Ferramentas prontas para aproximar times amadores — sem reinventar o que você já organiza no Kyvora Gestão.",
 } as const;
 
 export const features: FeatureItem[] = [
@@ -90,83 +93,75 @@ export const features: FeatureItem[] = [
     id: "encontrar-jogos",
     title: "Encontre jogos",
     description:
-      "Descubra times disponíveis e oportunidades de partidas perto de você.",
+      "Descubra disponibilidades publicadas por outros times e filtre por modalidade, cidade e data.",
     icon: UserRoundSearch,
-    status: "coming-soon",
   },
   {
-    id: "times-proximos",
-    title: "Times próximos",
+    id: "times-cidade",
+    title: "Times por cidade",
     description:
-      "Localize equipes por cidade, região e modalidade.",
+      "Localize equipes pela cidade e modalidade informadas no perfil do time.",
     icon: MapPinned,
-    status: "coming-soon",
   },
   {
     id: "desafie",
     title: "Desafie outros times",
     description:
-      "Envie e receba desafios para organizar novos confrontos.",
+      "Envie e receba desafios para combinar confrontos com data, horário e local.",
     icon: Swords,
-    status: "coming-soon",
   },
   {
     id: "amistosos",
     title: "Organize amistosos",
     description:
-      "Combine data, horário, local e detalhes da partida.",
+      "Ajuste detalhes da partida, confirme propostas e acompanhe o status do desafio.",
     icon: CalendarClock,
-    status: "coming-soon",
   },
   {
     id: "disponibilidade",
     title: "Disponibilidade do time",
     description:
-      "Informe quando sua equipe está disponível para jogar.",
+      "Publique quando sua equipe está livre para jogar e apareça na exploração.",
     icon: MessageSquareShare,
-    status: "coming-soon",
   },
   {
-    id: "perfil-publico",
-    title: "Perfil público",
+    id: "perfil-time",
+    title: "Perfil do time",
     description:
-      "Apresente identidade, elenco, jogos e estatísticas públicas do time.",
+      "Apresente identidade, modalidade, cidade e descrição pública do time.",
     icon: UsersRound,
-    status: "coming-soon",
   },
   {
     id: "integracao",
     title: "Integração com o Kyvora",
     description:
-      "Use as informações já cadastradas na gestão do time, sem duplicar o trabalho.",
+      "Use a mesma conta e a mesma entidade de time da Gestão, sem duplicar cadastro.",
     icon: Link2,
-    status: "coming-soon",
   },
 ];
 
 export const howItWorks = {
-  id: "como-funcionara",
-  title: "Como funcionará",
-  subtitle: "Três passos simples do encontro ao jogo.",
+  id: "como-funciona",
+  title: "Como funciona",
+  subtitle: "Três passos do cadastro ao jogo.",
   steps: [
     {
-      id: "encontre",
+      id: "cadastre",
       number: "01",
-      title: "Encontre",
-      description: "Localize times e oportunidades próximos de você.",
+      title: "Cadastre seu time",
+      description: "Crie a conta, vincule ou monte o time e ative a participação no Arena.",
     },
     {
-      id: "conecte",
+      id: "publique",
       number: "02",
-      title: "Conecte",
-      description: "Envie um desafio e combine os detalhes da partida.",
+      title: "Publique e explore",
+      description: "Informe disponibilidade e veja times prontos para jogar.",
     },
     {
-      id: "jogue",
+      id: "desafie",
       number: "03",
-      title: "Jogue",
-      description:
-        "Registre o jogo e construa a história pública do seu time.",
+      title: "Desafie e confirme",
+      description: "Envie o desafio, combine os detalhes e confirme a partida.",
     },
   ] satisfies StepItem[],
 } as const;
@@ -180,7 +175,7 @@ export const ecosystem = {
     {
       id: "arena",
       title: "Arena Kyvora",
-      text: "Experiência pública para encontrar adversários e combinar amistosos.",
+      text: "Experiência gratuita para encontrar adversários e combinar amistosos.",
     },
     {
       id: "gestao",
@@ -190,22 +185,20 @@ export const ecosystem = {
     {
       id: "dados",
       title: "Dados sob controle",
-      text: "Futuramente, o dirigente decide o que fica público no Arena.",
+      text: "O dirigente define o que o time mostra publicamente no Arena.",
     },
   ],
 } as const;
 
 export const finalCta = {
-  id: "acompanhar",
-  title: "Prepare seu time para entrar em campo.",
+  id: "comecar",
+  title: "Entre em campo com o seu time.",
   subtitle:
-    "Acompanhe o lançamento do Arena Kyvora ou continue organizando seu time no Kyvora Gestão.",
-  primaryLabel: "Acompanhar lançamento",
-  primaryEvent: "cta_final_waitlist",
+    "O Arena Kyvora é gratuito. Crie sua conta, ative o perfil do time e comece a explorar adversários.",
+  primaryLabel: "Criar conta grátis",
+  primaryEvent: "cta_final_criar_conta",
   secondaryLabel: "Conhecer Kyvora Gestão",
   secondaryEvent: "cta_final_gestao",
-  waitlistPendingNote:
-    "A captura de interesse ainda não está integrada. Configure NEXT_PUBLIC_WAITLIST_URL ou use o e-mail de contato.",
 } as const;
 
 export const footer = {
@@ -216,5 +209,3 @@ export const footer = {
     { id: "contato", label: "Contato", href: "/contato" },
   ],
 } as const;
-
-export const statusLabel = "Em breve" as const;

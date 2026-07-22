@@ -38,21 +38,21 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
-              href="/criar-conta"
+              href={hero.primaryCta.href}
               size="lg"
-              data-analytics="cta_hero_criar_conta"
-              onClick={() => trackEvent("cta_hero_criar_conta")}
+              data-analytics={hero.primaryCta.event}
+              onClick={() => trackEvent(hero.primaryCta.event)}
             >
-              Criar conta grátis
+              {hero.primaryCta.label}
             </Button>
             <Button
-              href="/entrar"
+              href={hero.secondaryCta.href}
               variant="outline"
               size="lg"
-              data-analytics="cta_hero_entrar"
-              onClick={() => trackEvent("cta_hero_entrar")}
+              data-analytics={hero.secondaryCta.event}
+              onClick={() => trackEvent(hero.secondaryCta.event)}
             >
-              Entrar
+              {hero.secondaryCta.label}
             </Button>
           </div>
         </div>
@@ -61,36 +61,21 @@ export function Hero() {
           className="relative rounded-lg border border-line bg-canvas/80 p-5 shadow-none backdrop-blur-[2px] motion-rise-delay sm:p-6"
           aria-label={hero.previewLabel}
         >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              {hero.previewLabel}
-            </p>
-            <span className="text-[11px] font-medium text-muted">Não operacional</span>
-          </div>
-
-          <div className="space-y-3" aria-hidden>
-            <div className="rounded-md border border-dashed border-line bg-surface px-4 py-3">
-              <p className="text-xs text-muted">Cidade ou região</p>
-              <p className="mt-1 text-sm font-medium text-ink/45">Ex.: São Paulo</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-md border border-dashed border-line bg-surface px-4 py-3">
-                <p className="text-xs text-muted">Modalidade</p>
-                <p className="mt-1 text-sm font-medium text-ink/45">Futsal</p>
-              </div>
-              <div className="rounded-md border border-dashed border-line bg-surface px-4 py-3">
-                <p className="text-xs text-muted">Raio</p>
-                <p className="mt-1 text-sm font-medium text-ink/45">Até 20 km</p>
-              </div>
-            </div>
-            <div className="rounded-md bg-ink px-4 py-3 text-center text-sm font-semibold text-canvas/70">
-              Buscar times
-            </div>
-          </div>
-
-          <p className="mt-4 text-sm leading-relaxed text-muted">
-            {hero.previewCaption}
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+            {hero.previewLabel}
           </p>
+
+          <ul className="space-y-3">
+            {hero.previewItems.map((item) => (
+              <li
+                key={item.label}
+                className="rounded-md border border-line bg-surface px-4 py-3"
+              >
+                <p className="text-sm font-semibold text-ink">{item.label}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted">{item.text}</p>
+              </li>
+            ))}
+          </ul>
         </aside>
       </Container>
     </section>
