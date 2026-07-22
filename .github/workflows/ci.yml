@@ -30,7 +30,9 @@ jobs:
       - name: Unit tests
         run: npm run test
 
-      - name: Production build
+      # Uses HML public URLs as a safe CI bake target (no indexing/analytics).
+      # Not a production deploy and not a PRD image publish.
+      - name: Application build with CI environment
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://hml-arena.kyvoraapp.com.br
@@ -42,8 +44,10 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      # Public + mocked suites only. Authenticated HML journeys require
+      # ARENA_E2E_PASSWORD and are excluded by playwright.config when unset.
       - name: End-to-end tests
-        run: npx playwright test --project=chromium
+        run: npx playwright test --project=chromium-desktop --project=chromium-mobile
         env:
           CI: true
           NEXT_PUBLIC_SITE_URL: https://hml-arena.kyvoraapp.com.br

@@ -10,6 +10,19 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 const isRemoteHml = /hml-arena\.kyvoraapp\.com\.br/i.test(baseURL);
 const envName = isRemoteHml ? "hml" : "local";
 const artifactRoot = path.join("artifacts", "playwright", envName);
+const hasE2ePassword = Boolean(process.env.ARENA_E2E_PASSWORD?.trim());
+
+/** Suites that register/login against HML API — skip in local/CI without secret. */
+const authHeavyLocalIgnore = [
+  /e2e[\\/]hml[\\/]specs[\\/]/,
+  /e2e[\\/]hml[\\/]notifications[\\/]/,
+  /e2e[\\/]hml[\\/]explorar[\\/]/,
+  /e2e[\\/]hml[\\/]feedback-cadastro-full/,
+];
+
+const localTestIgnore = hasE2ePassword
+  ? [/e2e[\\/]hml[\\/]specs[\\/]/]
+  : authHeavyLocalIgnore;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -47,7 +60,7 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: "npm run build && npm run start",
+          command: `npm run build && npx next start --hostname 127.0.0.1 --port ${new URL(baseURL).port || "3000"}`,
           url: baseURL,
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,
@@ -60,8 +73,9 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 900 },
       },
-      // Local: skip long HML journey specs; allow targeted UX suites under e2e/hml/*
-      testIgnore: isRemoteHml ? [] : [/e2e[\\/]hml[\\/]specs[\\/]/],
+      // Local/CI without ARENA_E2E_PASSWORD: public + mocked only.
+      // Remote HML: full desktop coverage including authenticated journeys.
+      testIgnore: isRemoteHml ? [] : localTestIgnore,
     },
     {
       name: "chromium-mobile",
@@ -72,7 +86,7 @@ export default defineConfig({
       },
       testIgnore: isRemoteHml
         ? [/e2e[\\/]hml[\\/]specs[\\/]02-/]
-        : [/e2e[\\/]hml[\\/]specs[\\/]/],
+        : localTestIgnore,
     },
   ],
 });
