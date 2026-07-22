@@ -105,6 +105,9 @@ Validador de imagem: `scripts/validate-public-env.mjs` e `admin/scripts/validate
 
 Compose e `.env` reais ficam **fora** deste repositório. Aqui versionamos apenas Dockerfiles.
 
+O `Dockerfile` **não** define defaults HML/PRD para as URLs públicas. Builds sem
+`--build-arg` explícitos falham em `scripts/validate-public-env.mjs`.
+
 ### Arena público
 
 ```bash

@@ -1,6 +1,7 @@
-# Arena Kyvora — HML / deployable image (Next.js standalone).
+# Arena Kyvora — deployable image (Next.js standalone).
 # Build-time NEXT_PUBLIC_* values are baked into the client bundle.
-# Never pass secrets as ARG/ENV.
+# Required public ARGs have NO environment defaults — pass them explicitly
+# (HML or PRD). Never pass secrets as ARG/ENV.
 
 FROM node:22-alpine AS deps
 WORKDIR /app
@@ -12,16 +13,19 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
-ARG NEXT_PUBLIC_SITE_URL=https://hml-arena.kyvoraapp.com.br
+# Required — must be provided via --build-arg (no HML/PRD defaults).
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_GESTAO_URL
+ARG NEXT_PUBLIC_KYVORA_API_BASE_URL
+ARG NEXT_PUBLIC_ALLOW_INDEXING
+ARG NEXT_PUBLIC_ENABLE_ANALYTICS
+
+# Optional public metadata / analytics IDs (IDs required when analytics=true).
 ARG NEXT_PUBLIC_SITE_NAME=Arena Kyvora
-ARG NEXT_PUBLIC_GESTAO_URL=https://hml.kyvoraapp.com.br
-ARG NEXT_PUBLIC_KYVORA_API_BASE_URL=https://hml-api.kyvoraapp.com.br
 ARG NEXT_PUBLIC_WAITLIST_URL=
 ARG NEXT_PUBLIC_CONTACT_EMAIL=contato@kyvoraapp.com.br
-ARG NEXT_PUBLIC_ENABLE_ANALYTICS=false
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=
 ARG NEXT_PUBLIC_META_PIXEL_ID=
-ARG NEXT_PUBLIC_ALLOW_INDEXING=false
 
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production \
@@ -39,7 +43,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Fail closed before baking: empty / localhost / prod-on-HML / indexing-on-HML must not ship.
+# Fail closed before baking: missing / localhost / cross-env / indexing-on-HML must not ship.
 RUN node scripts/validate-public-env.mjs \
   && npm run build
 

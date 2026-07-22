@@ -24,7 +24,8 @@ O frontend **não** deve apontar para IP do Jarvis, hostname interno ou banco.
 
 ## Variáveis públicas (somente `NEXT_PUBLIC_*` / `VITE_*`)
 
-Copie `.env.hml.example` / `admin/.env.example` como referência. Valores são **bake-time** no `Dockerfile`.
+Copie `.env.hml.example` / `admin/.env.example` como referência. Valores são **bake-time** no `Dockerfile`
+(sem defaults HML silenciosos — passe `--build-arg` explícitos ou o build falha em `validate-public-env.mjs`).
 
 | Variável | Obrigatoriedade HML | Valor esperado |
 |----------|---------------------|----------------|
