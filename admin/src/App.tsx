@@ -6,9 +6,12 @@ import { AccessDeniedPage } from "./pages/AccessDeniedPage";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import { AuditPage } from "./pages/AuditPage";
 import { ChallengesPage } from "./pages/ChallengesPage";
+import { DisputesPage } from "./pages/DisputesPage";
+import { FeedbacksPage } from "./pages/FeedbacksPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ModerationPage } from "./pages/ModerationPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { RatingsPage } from "./pages/RatingsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TeamDetailPage } from "./pages/TeamDetailPage";
 import { TeamsPage } from "./pages/TeamsPage";
@@ -67,6 +70,30 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ModerationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/feedbacks"
+            element={
+              <ProtectedRoute>
+                <FeedbacksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ratings"
+            element={
+              <ProtectedRoute>
+                <RatingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/disputes"
+            element={
+              <ProtectedRoute>
+                <DisputesPage />
               </ProtectedRoute>
             }
           />

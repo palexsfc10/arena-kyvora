@@ -23,6 +23,25 @@ export type ArenaSession = {
   gestao_url: string;
 };
 
+export type ChallengeContextState =
+  | "pending"
+  | "awaiting_reconfirmation"
+  | "accepted"
+  | string;
+
+/**
+ * Lightweight hint about an existing challenge tied to an explored
+ * availability, so the Explorar page can nudge the user without hiding the
+ * opportunity or the opposing team.
+ */
+export type ChallengeContext = {
+  state: ChallengeContextState;
+  challenge_id: string;
+  proposed_date: string | null;
+  proposed_time: string | null;
+  direction: "sent" | "received" | string;
+};
+
 export type AvailabilityItem = {
   id: string;
   organization_id: string;
@@ -42,6 +61,7 @@ export type AvailabilityItem = {
   created_at: string;
   status?: string;
   version?: number;
+  challenge_context?: ChallengeContext | null;
 };
 
 export type ChallengeItem = {
@@ -127,6 +147,75 @@ export type TeamSettings = {
   public_stats: boolean;
   public_description: string | null;
   can_manage: boolean;
+};
+
+export type FilterOptionsResponse = {
+  cities: string[];
+  states: string[];
+  modalities?: string[];
+};
+
+export type ArenaFeedbackType =
+  | "suggestion"
+  | "improvement"
+  | "problem"
+  | "compliment";
+
+export type CreateFeedbackPayload = {
+  feedback_type: ArenaFeedbackType;
+  subject: string;
+  body: string;
+  organization_id?: string;
+};
+
+export type TeamReputation = {
+  organization_id: string;
+  reputation_building: boolean;
+  ratings_count: number;
+  avg_overall: number | null;
+  avg_punctuality: number | null;
+  avg_organization: number | null;
+  avg_fair_play: number | null;
+  avg_communication: number | null;
+  no_show_rate: number | null;
+  matches_played_count: number;
+  badges: string[];
+};
+
+export type RatingEligibility = {
+  eligible: boolean;
+  reason?: string | null;
+  already_rated?: boolean;
+};
+
+export type CreateRatingPayload = {
+  match_happened: boolean;
+  overall: number;
+  punctuality: number;
+  organization_score: number;
+  fair_play: number;
+  communication: number;
+  private_comment?: string;
+};
+
+export type RatingItem = {
+  id: string;
+  challenge_id: string;
+  organization_id: string;
+  rated_organization_id: string;
+  match_happened: boolean;
+  overall: number;
+  punctuality: number;
+  organization_score: number;
+  fair_play: number;
+  communication: number;
+  private_comment: string | null;
+  status: string;
+  created_at: string;
+};
+
+export type CreateDisputePayload = {
+  reason: string;
 };
 
 export type Paginated<T> = {

@@ -357,6 +357,129 @@ export async function fetchAuditLogs(
 }
 
 /* ------------------------------------------------------------------ */
+/* Feedbacks (Arena Community Trust)                                   */
+/* ------------------------------------------------------------------ */
+
+export interface ArenaFeedbackItem {
+  id: string;
+  feedback_type: string;
+  subject: string;
+  body: string;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  status: string;
+  admin_note?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export async function fetchFeedbacks(
+  params: ListParams = {},
+): Promise<Paginated<ArenaFeedbackItem>> {
+  try {
+    const { data } = await apiClient.get<ApiSuccess<Paginated<ArenaFeedbackItem>>>(
+      "/api/v1/admin/arena/feedbacks",
+      { params },
+    );
+    return unwrap(data);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return emptyPage();
+    throw error;
+  }
+}
+
+export async function updateFeedback(
+  id: string,
+  payload: { status: string; admin_note?: string },
+): Promise<void> {
+  await apiClient.patch(`/api/v1/admin/arena/feedbacks/${id}`, payload);
+}
+
+/* ------------------------------------------------------------------ */
+/* Ratings (Arena Community Trust)                                     */
+/* ------------------------------------------------------------------ */
+
+export interface ArenaRatingItem {
+  id: string;
+  challenge_id: string;
+  reviewer_organization_id: string;
+  reviewer_organization_name?: string | null;
+  reviewed_organization_id: string;
+  reviewed_organization_name?: string | null;
+  match_happened: boolean;
+  overall: number;
+  punctuality: number;
+  organization_score: number;
+  fair_play: number;
+  communication: number;
+  private_comment?: string | null;
+  status: string;
+  visible_at?: string | null;
+  created_at: string;
+}
+
+export async function fetchRatings(
+  params: ListParams = {},
+): Promise<Paginated<ArenaRatingItem>> {
+  try {
+    const { data } = await apiClient.get<ApiSuccess<Paginated<ArenaRatingItem>>>(
+      "/api/v1/admin/arena/ratings",
+      { params },
+    );
+    return unwrap(data);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return emptyPage();
+    throw error;
+  }
+}
+
+export async function invalidateRating(id: string, reason: string): Promise<void> {
+  await apiClient.post(`/api/v1/admin/arena/ratings/${id}/invalidate`, { reason });
+}
+
+/* ------------------------------------------------------------------ */
+/* Disputes (Arena Community Trust)                                    */
+/* ------------------------------------------------------------------ */
+
+export interface ArenaDisputeItem {
+  id: string;
+  rating_id: string;
+  opened_by_organization_id?: string | null;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  reason: string;
+  status: string;
+  resolution_note?: string | null;
+  created_at: string;
+}
+
+export async function fetchDisputes(
+  params: ListParams = {},
+): Promise<Paginated<ArenaDisputeItem>> {
+  try {
+    const { data } = await apiClient.get<ApiSuccess<Paginated<ArenaDisputeItem>>>(
+      "/api/v1/admin/arena/disputes",
+      { params },
+    );
+    return unwrap(data);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return emptyPage();
+    throw error;
+  }
+}
+
+export async function resolveDispute(
+  id: string,
+  action: "accepted" | "rejected",
+  note: string,
+): Promise<void> {
+  await apiClient.post(`/api/v1/admin/arena/disputes/${id}/resolve`, {
+    action,
+    note,
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Settings                                                             */
 /* ------------------------------------------------------------------ */
 

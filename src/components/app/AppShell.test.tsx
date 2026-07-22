@@ -203,6 +203,18 @@ describe("AppShell authenticated shell", () => {
     expect(desktop.getAttribute("href")).toContain("https://hml.kyvoraapp.com.br");
   });
 
+  it("shows an Enviar sugestão link pointing to the feedback page", () => {
+    render(
+      <AppShell>
+        <p>conteudo</p>
+      </AppShell>,
+    );
+
+    const link = screen.getByRole("link", { name: /Enviar sugestão/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/app/feedback");
+  });
+
   it("does not render CTA that creates org, trial, subscription or checkout", () => {
     render(
       <AppShell>

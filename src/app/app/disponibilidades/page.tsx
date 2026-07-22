@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
 import type { AvailabilityItem } from "@/lib/arena-types";
 import { trackEvent } from "@/lib/analytics";
+import { getCityHints } from "@/lib/locationHints";
 
 export default function DisponibilidadesPage() {
   const { selectedTeam, session } = useAuth();
@@ -24,6 +25,8 @@ export default function DisponibilidadesPage() {
   const [period, setPeriod] = useState("flexible");
   const [venue, setVenue] = useState("to_arrange");
   const [notes, setNotes] = useState("");
+
+  const locationHints = getCityHints(city, region);
 
   const load = useCallback(async () => {
     if (!selectedTeam) return;
@@ -153,8 +156,19 @@ export default function DisponibilidadesPage() {
               value={region}
               onChange={(e) => setRegion(e.target.value)}
               className="w-full rounded-md border border-line bg-white px-3 py-2.5"
+              maxLength={2}
+              placeholder="Ex.: SP"
             />
           </label>
+          {locationHints.length > 0 ? (
+            <div className="sm:col-span-2">
+              {locationHints.map((hint) => (
+                <p key={hint} className="text-xs text-amber-700">
+                  {hint}
+                </p>
+              ))}
+            </div>
+          ) : null}
           <label className="text-sm">
             <span className="mb-1 block text-muted">Período</span>
             <select

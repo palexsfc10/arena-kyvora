@@ -8,6 +8,7 @@ import {
   Compass,
   ExternalLink,
   LogOut,
+  MessageSquarePlus,
   Swords,
   UsersRound,
 } from "lucide-react";
@@ -208,6 +209,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             ) : null}
 
             <NotificationsPanel />
+
+            <Link
+              href="/app/feedback"
+              className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-muted hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              aria-label="Enviar sugestão"
+              title="Enviar sugestão"
+            >
+              <MessageSquarePlus className="h-4 w-4" aria-hidden />
+            </Link>
 
             <button
               type="button"

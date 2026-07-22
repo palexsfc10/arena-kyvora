@@ -7,7 +7,8 @@ import { TeamShield } from "@/components/app/TeamShield";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
-import type { TeamSettings } from "@/lib/arena-types";
+import type { TeamReputation, TeamSettings } from "@/lib/arena-types";
+import { getDiscoverableLocationHints } from "@/lib/locationHints";
 
 const MAX_LOGO_BYTES = 4 * 1024 * 1024;
 
@@ -22,6 +23,9 @@ export default function MeuTimePage() {
   const [logoError, setLogoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [reputation, setReputation] = useState<TeamReputation | null>(null);
+  const [reputationLoading, setReputationLoading] = useState(true);
+
   const load = useCallback(async () => {
     if (!selectedTeam) return;
     setLoading(true);
@@ -35,9 +39,34 @@ export default function MeuTimePage() {
     }
   }, [selectedTeam]);
 
+  const loadReputation = useCallback(async () => {
+    if (!selectedTeam) return;
+    setReputationLoading(true);
+    try {
+      const data = await arenaApi.getTeamReputation(selectedTeam.organization_id);
+      setReputation(data);
+    } catch {
+      setReputation(null);
+    } finally {
+      setReputationLoading(false);
+    }
+  }, [selectedTeam]);
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void loadReputation();
+  }, [loadReputation]);
+
+  const locationHints = settings
+    ? getDiscoverableLocationHints({
+        city: settings.city,
+        state: settings.state,
+        discoverable: settings.discoverable,
+      })
+    : [];
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
@@ -215,6 +244,15 @@ export default function MeuTimePage() {
                 </span>
               </span>
             </label>
+            {locationHints.length > 0 ? (
+              <div className="-mt-2 ml-7 space-y-0.5">
+                {locationHints.map((hint) => (
+                  <p key={hint} className="text-xs text-amber-700">
+                    {hint}
+                  </p>
+                ))}
+              </div>
+            ) : null}
             <label className="flex items-start gap-3 text-sm">
               <input
                 type="checkbox"
@@ -267,6 +305,69 @@ export default function MeuTimePage() {
               {error}
             </p>
           ) : null}
+
+          <div className="mt-10 border-t border-line pt-8">
+            <h2 className="font-display text-lg font-semibold text-ink">
+              Reputação na comunidade
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Construída a partir das avaliações recebidas de outros times após as partidas.
+            </p>
+
+            {reputationLoading ? (
+              <p className="mt-4 text-sm text-muted">Carregando reputação…</p>
+            ) : !reputation ? (
+              <p className="mt-4 text-sm text-muted">
+                Não foi possível carregar a reputação agora.
+              </p>
+            ) : reputation.reputation_building ? (
+              <div className="mt-4 rounded-md border border-line bg-surface p-4">
+                <p className="text-sm font-medium text-ink">Reputação em construção</p>
+                <p className="mt-1 text-sm text-muted">
+                  Seu time ainda não tem avaliações suficientes. Ela aparecerá aqui após as
+                  próximas partidas confirmadas.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {reputation.badges.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {reputation.badges.map((badge) => (
+                      <span
+                        key={badge}
+                        className="inline-flex items-center rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-accent-deep"
+                      >
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  {(
+                    [
+                      ["Nota geral", reputation.avg_overall],
+                      ["Pontualidade", reputation.avg_punctuality],
+                      ["Organização", reputation.avg_organization],
+                      ["Fair play", reputation.avg_fair_play],
+                      ["Comunicação", reputation.avg_communication],
+                    ] as const
+                  ).map(([label, value]) => (
+                    <div key={label} className="rounded-md border border-line px-3 py-2">
+                      <dt className="text-xs text-muted">{label}</dt>
+                      <dd className="text-sm font-semibold text-ink">
+                        {value != null ? value.toFixed(1) : "—"}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="text-xs text-muted">
+                  {reputation.ratings_count}{" "}
+                  {reputation.ratings_count === 1 ? "avaliação recebida" : "avaliações recebidas"}
+                  . Comentários privados não são exibidos publicamente.
+                </p>
+              </div>
+            )}
+          </div>
         </>
       )}
     </Container>

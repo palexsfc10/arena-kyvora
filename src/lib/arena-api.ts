@@ -7,9 +7,16 @@ import type {
   AvailabilityItem,
   ChallengeCommentItem,
   ChallengeItem,
+  CreateDisputePayload,
+  CreateFeedbackPayload,
+  CreateRatingPayload,
+  FilterOptionsResponse,
   NextMatchItem,
   Paginated,
   PaginatedNotifications,
+  RatingEligibility,
+  RatingItem,
+  TeamReputation,
   TeamSettings,
 } from "@/lib/arena-types";
 import type { ApiSuccess } from "@/lib/arena-types";
@@ -349,4 +356,73 @@ export function uploadTeamLogo(organizationId: string, file: File) {
 
 export function deleteTeamLogo(organizationId: string) {
   return uploadOrDeleteLogo(organizationId, "DELETE");
+}
+
+/* ------------------------------------------------------------------ */
+/* Filter options (city/state autocomplete for Explorar)              */
+/* ------------------------------------------------------------------ */
+
+export function getFilterOptions(
+  params: { state?: string; q?: string; limit?: string } = {},
+) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  const qs = query.toString();
+  return apiRequest<FilterOptionsResponse>(
+    `/api/v1/arena/filter-options${qs ? `?${qs}` : ""}`,
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Feedback (Comunidade / suggestions)                                */
+/* ------------------------------------------------------------------ */
+
+export function submitFeedback(payload: CreateFeedbackPayload) {
+  return apiRequest<{ id: string; status?: string }>(
+    "/api/v1/arena/feedbacks",
+    { method: "POST", body: payload },
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Reputation & ratings (Arena Community Trust)                       */
+/* ------------------------------------------------------------------ */
+
+export function getTeamReputation(organizationId: string) {
+  return apiRequest<TeamReputation>(
+    `/api/v1/arena/teams/${organizationId}/reputation`,
+  );
+}
+
+export function getRatingEligibility(
+  organizationId: string,
+  challengeId: string,
+) {
+  return apiRequest<RatingEligibility>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/rating-eligibility`,
+  );
+}
+
+export function submitRating(
+  organizationId: string,
+  challengeId: string,
+  payload: CreateRatingPayload,
+) {
+  return apiRequest<RatingItem>(
+    `/api/v1/arena/teams/${organizationId}/challenges/${challengeId}/ratings`,
+    { method: "POST", body: payload },
+  );
+}
+
+export function createDispute(
+  organizationId: string,
+  ratingId: string,
+  payload: CreateDisputePayload,
+) {
+  return apiRequest<{ id: string }>(
+    `/api/v1/arena/teams/${organizationId}/ratings/${ratingId}/disputes`,
+    { method: "POST", body: payload },
+  );
 }

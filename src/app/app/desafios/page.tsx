@@ -1,14 +1,16 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AlertTriangle, MessageSquare, Phone } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { TeamShield } from "@/components/app/TeamShield";
+import { RatingModal } from "@/components/app/RatingModal";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
-import type { ChallengeCommentItem, ChallengeItem } from "@/lib/arena-types";
+import type { ChallengeCommentItem, ChallengeItem, RatingEligibility } from "@/lib/arena-types";
 import { trackEvent } from "@/lib/analytics";
 
 const statusLabel: Record<string, string> = {
@@ -27,6 +29,17 @@ const venueLabel: Record<string, string> = {
 };
 
 const ACTIVE_COMMENT_STATUSES = new Set(["pending", "accepted", "awaiting_reconfirmation"]);
+const CONFIRMED_STATUSES = new Set(["accepted", "awaiting_reconfirmation"]);
+const HISTORY_STATUSES = new Set(["declined", "cancelled", "expired"]);
+
+type Tab = "received" | "sent" | "confirmed" | "history";
+
+const TABS: Array<{ value: Tab; label: string }> = [
+  { value: "received", label: "Recebidos" },
+  { value: "sent", label: "Enviados" },
+  { value: "confirmed", label: "Confirmados" },
+  { value: "history", label: "Histórico" },
+];
 
 type EditForm = {
   proposed_date: string;
@@ -68,11 +81,32 @@ function friendlyError(err: unknown, fallback: string): string {
   return fallback;
 }
 
-export default function DesafiosPage() {
+/** Buckets a challenge into exactly one of the four Desafios tabs. */
+function tabFor(item: ChallengeItem): Tab {
+  if (CONFIRMED_STATUSES.has(item.status)) return "confirmed";
+  if (HISTORY_STATUSES.has(item.status)) return "history";
+  return item.direction === "sent" ? "sent" : "received";
+}
+
+function isPastDate(dateStr: string): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const date = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.getTime() < today.getTime();
+}
+
+function needsRatingCheck(item: ChallengeItem): boolean {
+  return CONFIRMED_STATUSES.has(item.status) && isPastDate(item.proposed_date);
+}
+
+function DesafiosContent() {
   const { selectedTeam, session, refreshPending, refreshNotifications } = useAuth();
+  const searchParams = useSearchParams();
+  const deepLinkChallenge = searchParams.get("challenge");
+
   const [items, setItems] = useState<ChallengeItem[]>([]);
-  const [direction, setDirection] = useState<"all" | "received" | "sent">("all");
-  const [status, setStatus] = useState("");
+  const [tab, setTab] = useState<Tab>("received");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -87,6 +121,12 @@ export default function DesafiosPage() {
   const [commentDraft, setCommentDraft] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
+  const [eligibility, setEligibility] = useState<Record<string, RatingEligibility>>({});
+  const [ratingFor, setRatingFor] = useState<ChallengeItem | null>(null);
+
+  const deepLinkHandled = useRef(false);
+  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+
   const canManage = Boolean(session?.can_manage_selected);
 
   const load = useCallback(async () => {
@@ -95,8 +135,7 @@ export default function DesafiosPage() {
     setError(null);
     try {
       const data = await arenaApi.listChallenges(selectedTeam.organization_id, {
-        direction: direction === "all" ? undefined : direction,
-        status: status || undefined,
+        page_size: "100",
       });
       setItems(data?.items ?? []);
       await refreshPending();
@@ -105,11 +144,38 @@ export default function DesafiosPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTeam, direction, status, refreshPending]);
+  }, [selectedTeam, refreshPending]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const grouped = useMemo(() => {
+    const buckets: Record<Tab, ChallengeItem[]> = {
+      received: [],
+      sent: [],
+      confirmed: [],
+      history: [],
+    };
+    for (const item of items) {
+      buckets[tabFor(item)].push(item);
+    }
+    return buckets;
+  }, [items]);
+
+  // Follow a deep link from Explorar (?challenge=<id>) into the right tab.
+  useEffect(() => {
+    if (deepLinkHandled.current || !deepLinkChallenge || items.length === 0) return;
+    const found = items.find((i) => i.id === deepLinkChallenge);
+    if (found) {
+      deepLinkHandled.current = true;
+      setTab(tabFor(found));
+      setExpandedId(found.id);
+      requestAnimationFrame(() => {
+        itemRefs.current[found.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [deepLinkChallenge, items]);
 
   async function act(
     challenge: ChallengeItem,
@@ -196,6 +262,14 @@ export default function DesafiosPage() {
     }
     setExpandedId(item.id);
     setCommentDraft("");
+    if (selectedTeam && needsRatingCheck(item) && !eligibility[item.id]) {
+      arenaApi
+        .getRatingEligibility(selectedTeam.organization_id, item.id)
+        .then((data) => setEligibility((prev) => ({ ...prev, [item.id]: data })))
+        .catch(() => {
+          // Rating eligibility is a soft enhancement; ignore failures.
+        });
+    }
     if (!selectedTeam || comments[item.id]) return;
     setCommentsLoading(true);
     try {
@@ -240,6 +314,8 @@ export default function DesafiosPage() {
     );
   }
 
+  const visibleItems = grouped[tab];
+
   return (
     <Container className="py-6 md:py-8">
       <h1 className="font-display text-2xl font-semibold text-ink">Desafios</h1>
@@ -247,40 +323,25 @@ export default function DesafiosPage() {
         Enviados e recebidos pelo time {selectedTeam.name}.
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        {(
-          [
-            ["all", "Todos"],
-            ["received", "Recebidos"],
-            ["sent", "Enviados"],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setDirection(value)}
-            className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              direction === value ? "bg-surface text-ink" : "text-muted"
-            }`}
-            aria-pressed={direction === value}
-          >
-            {label}
-          </button>
-        ))}
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="rounded-md border border-line bg-white px-3 py-2 text-sm"
-          aria-label="Filtrar por status"
-        >
-          <option value="">Qualquer status</option>
-          <option value="pending">Pendentes</option>
-          <option value="accepted">Aceitos</option>
-          <option value="awaiting_reconfirmation">Aguardando reconfirmação</option>
-          <option value="declined">Recusados</option>
-          <option value="cancelled">Cancelados</option>
-          <option value="expired">Expirados</option>
-        </select>
+      <div className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="Filtrar desafios">
+        {TABS.map(({ value, label }) => {
+          const count = grouped[value].length;
+          return (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={tab === value}
+              onClick={() => setTab(value)}
+              className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                tab === value ? "bg-surface text-ink" : "text-muted"
+              }`}
+            >
+              {label}
+              {count > 0 ? <span className="ml-1.5 text-xs text-muted">({count})</span> : null}
+            </button>
+          );
+        })}
       </div>
 
       {message ? (
@@ -296,18 +357,26 @@ export default function DesafiosPage() {
           <p className="text-sm text-red-700" role="alert">
             {error}
           </p>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <p className="text-sm text-muted">Nenhum desafio neste filtro.</p>
         ) : (
           <ul className="space-y-5">
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const isEditing = editingId === item.id && editForm;
               const isExpanded = expandedId === item.id;
               const writable = ACTIVE_COMMENT_STATUSES.has(item.status);
               const itemComments = comments[item.id] ?? [];
+              const itemEligibility = eligibility[item.id];
+              const showRatingCta = needsRatingCheck(item) && canManage;
 
               return (
-                <li key={item.id} className="border-b border-line pb-5">
+                <li
+                  key={item.id}
+                  ref={(el) => {
+                    itemRefs.current[item.id] = el;
+                  }}
+                  className="border-b border-line pb-5"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-2.5">
                       <TeamShield logoUrl={opponentLogo(item)} name={opponentName(item)} />
@@ -376,6 +445,27 @@ export default function DesafiosPage() {
 
                   {item.message ? (
                     <p className="mt-2 text-sm text-ink-soft">{item.message}</p>
+                  ) : null}
+
+                  {showRatingCta ? (
+                    <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                      {itemEligibility?.already_rated ? (
+                        <p>Você já avaliou esta partida. Obrigado!</p>
+                      ) : itemEligibility && !itemEligibility.eligible ? (
+                        <p>{itemEligibility.reason ?? "Avaliação indisponível para esta partida."}</p>
+                      ) : (
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span>Como foi a partida com {opponentName(item)}?</span>
+                          <Button
+                            type="button"
+                            size="md"
+                            onClick={() => setRatingFor(item)}
+                          >
+                            Avaliar partida
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   ) : null}
 
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -564,6 +654,40 @@ export default function DesafiosPage() {
           </ul>
         )}
       </div>
+
+      {ratingFor ? (
+        <RatingModal
+          open
+          organizationId={selectedTeam.organization_id}
+          challengeId={ratingFor.id}
+          opponentName={opponentName(ratingFor)}
+          onClose={() => setRatingFor(null)}
+          onSubmitted={() => {
+            setEligibility((prev) => ({
+              ...prev,
+              [ratingFor.id]: { eligible: false, already_rated: true },
+            }));
+            setMessage("Avaliação enviada. Obrigado por ajudar a comunidade!");
+            setRatingFor(null);
+          }}
+        />
+      ) : null}
     </Container>
+  );
+}
+
+export default function DesafiosPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container className="py-8">
+          <p className="text-sm text-muted" role="status">
+            Carregando…
+          </p>
+        </Container>
+      }
+    >
+      <DesafiosContent />
+    </Suspense>
   );
 }

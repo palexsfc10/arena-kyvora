@@ -1,13 +1,15 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { TeamShield } from "@/components/app/TeamShield";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
-import type { AvailabilityItem, NextMatchItem } from "@/lib/arena-types";
+import type { AvailabilityItem, ChallengeContext, NextMatchItem } from "@/lib/arena-types";
+import { BR_UF_LIST } from "@/lib/locationHints";
 import { trackEvent } from "@/lib/analytics";
 
 const periodLabel: Record<string, string> = {
@@ -33,15 +35,46 @@ function friendlyError(err: unknown, fallback: string): string {
   return fallback;
 }
 
-export default function ExplorarPage() {
+type ContextBadge = {
+  label: string;
+  ctaLabel?: string;
+};
+
+function contextBadge(ctx: ChallengeContext | null | undefined): ContextBadge | null {
+  if (!ctx || ctx.state === "none") return null;
+  if (ctx.state === "incoming_pending" || (ctx.state === "pending" && ctx.direction === "received")) {
+    return { label: "Aguardando sua resposta", ctaLabel: "Responder" };
+  }
+  if (ctx.state === "awaiting_reconfirmation") {
+    return { label: "Aguardando reconfirmação", ctaLabel: "Responder" };
+  }
+  if (ctx.state === "outgoing_pending" || ctx.state === "pending") {
+    return { label: "Aguardando" };
+  }
+  if (ctx.state === "accepted") {
+    return { label: "Confirmado" };
+  }
+  return null;
+}
+
+function ExplorarContent() {
   const { selectedTeam, session } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [items, setItems] = useState<AvailabilityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modality, setModality] = useState("");
-  const [city, setCity] = useState("");
-  const [availableOn, setAvailableOn] = useState("");
-  const [period, setPeriod] = useState("");
+
+  const [modality, setModality] = useState(searchParams.get("modality") ?? "");
+  const [city, setCity] = useState(searchParams.get("city") ?? "");
+  const [uf, setUf] = useState(searchParams.get("state") ?? "");
+  const [availableOn, setAvailableOn] = useState(searchParams.get("available_on") ?? "");
+  const [period, setPeriod] = useState(searchParams.get("preferred_period") ?? "");
+
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const cityBoxRef = useRef<HTMLDivElement>(null);
 
   const [nextMatch, setNextMatch] = useState<NextMatchItem | null>(null);
   const [nextMatchLoading, setNextMatchLoading] = useState(true);
@@ -64,6 +97,7 @@ export default function ExplorarPage() {
       const data = await arenaApi.exploreAvailabilities({
         modality: modality || undefined,
         city: city || undefined,
+        state: uf || undefined,
         available_on: availableOn || undefined,
         preferred_period: period || undefined,
       });
@@ -73,7 +107,7 @@ export default function ExplorarPage() {
     } finally {
       setLoading(false);
     }
-  }, [modality, city, availableOn, period]);
+  }, [modality, city, uf, availableOn, period]);
 
   const loadNextMatch = useCallback(async () => {
     if (!selectedTeam) {
@@ -99,9 +133,54 @@ export default function ExplorarPage() {
     void loadNextMatch();
   }, [loadNextMatch]);
 
+  // Keep the URL in sync with the active filters so links can be shared/bookmarked.
+  useEffect(() => {
+    const query = new URLSearchParams();
+    if (modality) query.set("modality", modality);
+    if (city) query.set("city", city);
+    if (uf) query.set("state", uf);
+    if (availableOn) query.set("available_on", availableOn);
+    if (period) query.set("preferred_period", period);
+    const qs = query.toString();
+    router.replace(`/app/explorar${qs ? `?${qs}` : ""}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modality, city, uf, availableOn, period]);
+
+  // Debounced city autocomplete, sourced from the filter-options endpoint.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      arenaApi
+        .getFilterOptions({ q: city || undefined, state: uf || undefined, limit: "8" })
+        .then((data) => {
+          const names = Array.from(
+            new Set((data?.cities ?? []).filter(Boolean)),
+          );
+          setCitySuggestions(names);
+        })
+        .catch(() => setCitySuggestions([]));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [city, uf]);
+
+  useEffect(() => {
+    function onClickOutside(event: MouseEvent) {
+      if (!cityBoxRef.current?.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const hasActiveFilters = useMemo(
+    () => Boolean(modality || city || uf || availableOn || period),
+    [modality, city, uf, availableOn, period],
+  );
+
   function clearFilters() {
     setModality("");
     setCity("");
+    setUf("");
     setAvailableOn("");
     setPeriod("");
   }
@@ -146,6 +225,7 @@ export default function ExplorarPage() {
       setChallengeFor(null);
       setChallengeMessage("");
       setChallengePhone("");
+      await load();
     } catch (err) {
       setActionMsg(friendlyError(err, "Falha ao enviar desafio."));
     } finally {
@@ -192,7 +272,7 @@ export default function ExplorarPage() {
       ) : null}
 
       <form
-        className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
+        className="mt-6 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
         onSubmit={(e) => {
           e.preventDefault();
           trackEvent("explore_filter_changed");
@@ -212,14 +292,52 @@ export default function ExplorarPage() {
             <option value="society">Society</option>
           </select>
         </label>
-        <label className="text-sm">
+        <div className="relative text-sm" ref={cityBoxRef}>
           <span className="mb-1 block text-muted">Cidade</span>
           <input
             value={city}
-            onChange={(e) => setCity(e.target.value)}
+            onChange={(e) => {
+              setCity(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
             className="w-full rounded-md border border-line bg-white px-3 py-2.5"
             placeholder="Ex.: São Paulo"
+            autoComplete="off"
           />
+          {showSuggestions && citySuggestions.length > 0 ? (
+            <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-line bg-white shadow-lg">
+              {citySuggestions.map((name) => (
+                <li key={name}>
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-surface"
+                    onClick={() => {
+                      setCity(name);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    {name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        <label className="text-sm">
+          <span className="mb-1 block text-muted">UF</span>
+          <select
+            value={uf}
+            onChange={(e) => setUf(e.target.value)}
+            className="w-full rounded-md border border-line bg-white px-3 py-2.5"
+          >
+            <option value="">Todas</option>
+            {BR_UF_LIST.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-muted">Data</span>
@@ -244,13 +362,15 @@ export default function ExplorarPage() {
             <option value="flexible">Flexível</option>
           </select>
         </label>
-        <div className="flex items-end gap-2">
+        <div className="col-span-2 flex items-end gap-2 sm:col-span-1">
           <Button type="submit" className="flex-1">
             Filtrar
           </Button>
-          <Button type="button" variant="outline" onClick={clearFilters}>
-            Limpar
-          </Button>
+          {hasActiveFilters ? (
+            <Button type="button" variant="outline" onClick={clearFilters}>
+              Limpar
+            </Button>
+          ) : null}
         </div>
       </form>
 
@@ -280,53 +400,65 @@ export default function ExplorarPage() {
           </p>
         ) : (
           <ul className="space-y-3">
-            {items.map((item) => (
-              <li
-                key={item.id}
-                className="border-b border-line py-4 last:border-b-0"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-2.5">
-                    <TeamShield logoUrl={item.logo_url} name={item.organization_name} />
-                    <div className="min-w-0">
-                      <h2
-                        className="truncate font-display text-lg font-semibold text-ink"
-                        title={item.organization_name}
-                      >
-                        {item.organization_name}
-                      </h2>
-                      <p className="mt-1 text-sm text-muted">
-                        {item.modality}
-                        {item.city ? ` · ${item.city}` : ""}
-                        {item.region ? `/${item.region}` : ""}
-                      </p>
-                      <p className="mt-1 text-sm text-ink-soft">
-                        {item.available_from}
-                        {item.available_until ? ` → ${item.available_until}` : ""}
-                        {" · "}
-                        {periodLabel[item.preferred_period] ?? item.preferred_period}
-                        {" · "}
-                        {venueLabel[item.venue_option] ?? item.venue_option}
-                      </p>
-                      {item.notes ? (
-                        <p className="mt-2 text-sm text-muted">{item.notes}</p>
-                      ) : null}
+            {items.map((item) => {
+              const badge = contextBadge(item.challenge_context);
+              return (
+                <li
+                  key={item.id}
+                  className="border-b border-line py-4 last:border-b-0"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-2.5">
+                      <TeamShield logoUrl={item.logo_url} name={item.organization_name} />
+                      <div className="min-w-0">
+                        <h2
+                          className="truncate font-display text-lg font-semibold text-ink"
+                          title={item.organization_name}
+                        >
+                          {item.organization_name}
+                        </h2>
+                        <p className="mt-1 text-sm text-muted">
+                          {item.modality}
+                          {item.city ? ` · ${item.city}` : ""}
+                          {item.region ? `/${item.region}` : ""}
+                        </p>
+                        <p className="mt-1 text-sm text-ink-soft">
+                          {item.available_from}
+                          {item.available_until ? ` → ${item.available_until}` : ""}
+                          {" · "}
+                          {periodLabel[item.preferred_period] ?? item.preferred_period}
+                          {" · "}
+                          {venueLabel[item.venue_option] ?? item.venue_option}
+                        </p>
+                        {item.notes ? (
+                          <p className="mt-2 text-sm text-muted">{item.notes}</p>
+                        ) : null}
+                        {badge ? (
+                          <span className="mt-2 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                            {badge.label}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
+                    {badge?.ctaLabel ? (
+                      <Button size="md" href="/app/desafios">
+                        {badge.ctaLabel}
+                      </Button>
+                    ) : session?.can_manage_selected ? (
+                      <Button
+                        type="button"
+                        size="md"
+                        onClick={() => openChallengeModal(item)}
+                      >
+                        Desafiar
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-muted">Somente gestores podem desafiar</p>
+                    )}
                   </div>
-                  {session?.can_manage_selected ? (
-                    <Button
-                      type="button"
-                      size="md"
-                      onClick={() => openChallengeModal(item)}
-                    >
-                      Desafiar
-                    </Button>
-                  ) : (
-                    <p className="text-xs text-muted">Somente gestores podem desafiar</p>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -430,5 +562,21 @@ export default function ExplorarPage() {
         </div>
       ) : null}
     </Container>
+  );
+}
+
+export default function ExplorarPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container className="py-8">
+          <p className="text-sm text-muted" role="status">
+            Carregando…
+          </p>
+        </Container>
+      }
+    >
+      <ExplorarContent />
+    </Suspense>
   );
 }
