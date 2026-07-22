@@ -5,56 +5,34 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { TeamShield } from "@/components/app/TeamShield";
+import { GestaoPromoCard, ManagementPromo } from "@/components/app/GestaoPromoCard";
+import { ExploreMobileTopPromo } from "@/components/app/ExploreMobileTopPromo";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
-import type { AvailabilityItem, ChallengeContext, NextMatchItem } from "@/lib/arena-types";
+import type { AvailabilityItem, NextMatchItem } from "@/lib/arena-types";
+import { resolveExploreCardAction } from "@/lib/exploreCardAction";
+import {
+  formatAvailabilityRange,
+  formatDisplayDateTime,
+  formatPeriodLabel,
+  formatVenueLabel,
+} from "@/lib/formatDisplay";
 import { BR_UF_LIST } from "@/lib/locationHints";
 import { trackEvent } from "@/lib/analytics";
-
-const periodLabel: Record<string, string> = {
-  morning: "Manhã",
-  afternoon: "Tarde",
-  evening: "Noite",
-  flexible: "Flexível",
-};
-
-const venueLabel: Record<string, string> = {
-  yes: "Local disponível",
-  no: "Sem local",
-  to_arrange: "A combinar",
-};
+import { cn } from "@/lib/cn";
 
 function friendlyError(err: unknown, fallback: string): string {
   if (err instanceof ApiError) {
     if (err.errorCode === "SCHEDULE_CONFLICT") {
       return "Já existe um compromisso confirmado nesse horário. Escolha outro horário.";
     }
+    if (err.errorCode === "ARENA_DUPLICATE_CHALLENGE") {
+      return "Já existe um desafio ativo com este time. Abra Desafios para acompanhar.";
+    }
     return err.message;
   }
   return fallback;
-}
-
-type ContextBadge = {
-  label: string;
-  ctaLabel?: string;
-};
-
-function contextBadge(ctx: ChallengeContext | null | undefined): ContextBadge | null {
-  if (!ctx || ctx.state === "none") return null;
-  if (ctx.state === "incoming_pending" || (ctx.state === "pending" && ctx.direction === "received")) {
-    return { label: "Aguardando sua resposta", ctaLabel: "Responder" };
-  }
-  if (ctx.state === "awaiting_reconfirmation") {
-    return { label: "Aguardando reconfirmação", ctaLabel: "Responder" };
-  }
-  if (ctx.state === "outgoing_pending" || ctx.state === "pending") {
-    return { label: "Aguardando" };
-  }
-  if (ctx.state === "accepted") {
-    return { label: "Confirmado" };
-  }
-  return null;
 }
 
 function ExplorarContent() {
@@ -186,6 +164,15 @@ function ExplorarContent() {
   }
 
   function openChallengeModal(item: AvailabilityItem) {
+    const relation = resolveExploreCardAction(item.challenge_context);
+    if (!relation.canChallenge) {
+      setActionMsg(
+        relation.statusLabel
+          ? `${relation.statusLabel}. Abra o desafio existente para continuar.`
+          : "Já existe um desafio ativo com este time.",
+      );
+      return;
+    }
     setChallengeFor(item);
     setChallengeDate(item.available_from);
     setChallengeTime("");
@@ -234,7 +221,9 @@ function ExplorarContent() {
   }
 
   return (
-    <Container className="py-6 md:py-8">
+    <Container className="min-w-0 py-6 md:py-8">
+      <ExploreMobileTopPromo />
+
       <h1 className="font-display text-2xl font-semibold text-ink">Explorar jogos</h1>
       <p className="mt-1 text-sm text-muted">
         Disponibilidades públicas de outros times prontos para jogar.
@@ -243,36 +232,61 @@ function ExplorarContent() {
         Arena Kyvora — gratuito para encontrar times e marcar jogos.
       </p>
 
+      {/* Desktop/tablet welcome promo; mobile uses ExploreMobileTopPromo above the title */}
+      <div className="mt-5 hidden md:block">
+        <ManagementPromo variant="login" />
+      </div>
+
       {!nextMatchLoading && nextMatch ? (
-        <div className="mt-6 rounded-lg border border-line bg-surface p-4">
+        <div
+          data-testid="next-match-card"
+          className="mt-6 rounded-lg border border-line bg-surface p-4"
+        >
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             Próxima partida confirmada
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <TeamShield
-              logoUrl={nextMatch.opponent_logo_url}
-              name={nextMatch.opponent_organization_name}
-              size="md"
-            />
-            <div className="min-w-0">
-              <p
-                className="truncate font-display text-lg font-semibold text-ink"
-                title={nextMatch.opponent_organization_name}
-              >
-                vs. {nextMatch.opponent_organization_name}
-              </p>
-              <p className="text-sm text-ink-soft">
-                {nextMatch.proposed_date}
-                {nextMatch.proposed_time ? ` · ${nextMatch.proposed_time}` : ""} ·{" "}
-                {venueLabel[nextMatch.venue_option] ?? nextMatch.venue_option}
-              </p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <TeamShield
+                logoUrl={nextMatch.opponent_logo_url}
+                name={nextMatch.opponent_organization_name}
+                size="md"
+              />
+              <div className="min-w-0">
+                <p
+                  className="truncate font-display text-lg font-semibold text-ink"
+                  title={nextMatch.opponent_organization_name}
+                >
+                  vs. {nextMatch.opponent_organization_name}
+                </p>
+                <p className="text-sm text-ink-soft">
+                  {formatDisplayDateTime(
+                    nextMatch.proposed_date,
+                    nextMatch.proposed_time,
+                  )}
+                </p>
+                <p className="text-sm text-muted">
+                  {formatVenueLabel(
+                    nextMatch.venue_option,
+                    nextMatch.venue_description,
+                  )}
+                </p>
+              </div>
             </div>
+            <Button
+              size="md"
+              variant="outline"
+              href={`/app/desafios?challenge=${encodeURIComponent(nextMatch.challenge_id)}`}
+            >
+              Ver partida
+            </Button>
           </div>
         </div>
       ) : null}
 
       <form
-        className="mt-6 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+        data-testid="explore-filters"
+        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6"
         onSubmit={(e) => {
           e.preventDefault();
           trackEvent("explore_filter_changed");
@@ -362,8 +376,8 @@ function ExplorarContent() {
             <option value="flexible">Flexível</option>
           </select>
         </label>
-        <div className="col-span-2 flex items-end gap-2 sm:col-span-1">
-          <Button type="submit" className="flex-1">
+        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
+          <Button type="submit" className="w-full flex-1 justify-center">
             Filtrar
           </Button>
           {hasActiveFilters ? (
@@ -395,22 +409,29 @@ function ExplorarContent() {
             </Button>
           </div>
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted">
-            Nenhuma disponibilidade encontrada com esses filtros.
-          </p>
+          <div className="space-y-4">
+            <p className="text-sm text-muted">
+              Nenhuma disponibilidade encontrada com esses filtros.
+            </p>
+            <GestaoPromoCard placement="explore_empty_state" />
+          </div>
         ) : (
           <ul className="space-y-3">
-            {items.map((item) => {
-              const badge = contextBadge(item.challenge_context);
+            {items.map((item, index) => {
+              const relation = resolveExploreCardAction(item.challenge_context);
+              const showAvailability = relation.canChallenge;
               return (
-                <li
-                  key={item.id}
-                  className="border-b border-line py-4 last:border-b-0"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <li key={item.id} className="space-y-3">
+                  {index === 3 ? <GestaoPromoCard placement="explore_after_third" /> : null}
+                  <div
+                    data-testid="explore-card"
+                    data-org={item.organization_id}
+                    data-relation-state={relation.state}
+                    className="border-b border-line py-4 last:border-b-0"
+                  >
                     <div className="flex min-w-0 items-start gap-2.5">
                       <TeamShield logoUrl={item.logo_url} name={item.organization_name} />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <h2
                           className="truncate font-display text-lg font-semibold text-ink"
                           title={item.organization_name}
@@ -422,43 +443,86 @@ function ExplorarContent() {
                           {item.city ? ` · ${item.city}` : ""}
                           {item.region ? `/${item.region}` : ""}
                         </p>
-                        <p className="mt-1 text-sm text-ink-soft">
-                          {item.available_from}
-                          {item.available_until ? ` → ${item.available_until}` : ""}
-                          {" · "}
-                          {periodLabel[item.preferred_period] ?? item.preferred_period}
-                          {" · "}
-                          {venueLabel[item.venue_option] ?? item.venue_option}
-                        </p>
-                        {item.notes ? (
-                          <p className="mt-2 text-sm text-muted">{item.notes}</p>
+                        {showAvailability ? (
+                          <div className="mt-1 space-y-0.5 text-sm text-ink-soft">
+                            <p>{formatAvailabilityRange(item.available_from, item.available_until)}</p>
+                            <p>
+                              {formatPeriodLabel(item.preferred_period)}
+                              {" · "}
+                              {formatVenueLabel(item.venue_option, item.venue_description)}
+                            </p>
+                          </div>
                         ) : null}
-                        {badge ? (
-                          <span className="mt-2 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                            {badge.label}
-                          </span>
+                        {item.notes?.trim() ? (
+                          <p className="mt-2 text-sm text-muted">
+                            <span className="font-medium text-ink-soft">Observação:</span>{" "}
+                            {item.notes.trim()}
+                          </p>
+                        ) : null}
+                        {relation.statusLabel ? (
+                          <div className="mt-2 space-y-0.5">
+                            <span
+                              data-testid="explore-relation-status"
+                              className={cn(
+                                "inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+                                relation.tone === "positive" &&
+                                  "border-emerald-200 bg-emerald-50 text-emerald-900",
+                                relation.tone === "attention" &&
+                                  "border-amber-200 bg-amber-50 text-amber-900",
+                                relation.tone === "neutral" &&
+                                  "border-line bg-surface text-ink-soft",
+                              )}
+                            >
+                              {relation.statusLabel}
+                            </span>
+                            {relation.detailLabel ? (
+                              <p
+                                data-testid="explore-relation-detail"
+                                className="text-xs text-muted"
+                              >
+                                {relation.detailLabel}
+                              </p>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
                     </div>
-                    {badge?.ctaLabel ? (
-                      <Button size="md" href="/app/desafios">
-                        {badge.ctaLabel}
-                      </Button>
-                    ) : session?.can_manage_selected ? (
-                      <Button
-                        type="button"
-                        size="md"
-                        onClick={() => openChallengeModal(item)}
-                      >
-                        Desafiar
-                      </Button>
-                    ) : (
-                      <p className="text-xs text-muted">Somente gestores podem desafiar</p>
-                    )}
+                    <div
+                      data-testid="explore-card-actions"
+                      className="mt-3 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap"
+                    >
+                      {relation.primaryAction ? (
+                        <Button
+                          size="md"
+                          href={relation.primaryAction.href}
+                          className="w-full justify-center sm:w-auto"
+                          data-testid="explore-primary-action"
+                        >
+                          {relation.primaryAction.label}
+                        </Button>
+                      ) : session?.can_manage_selected ? (
+                        <Button
+                          type="button"
+                          size="md"
+                          className="w-full justify-center sm:w-auto"
+                          data-testid="explore-desafiar"
+                          onClick={() => openChallengeModal(item)}
+                        >
+                          Desafiar
+                        </Button>
+                      ) : (
+                        <p className="text-xs text-muted">Somente gestores podem desafiar</p>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
             })}
+            {items.length > 0 && items.length <= 3 ? (
+              <li className="pt-2">
+                <GestaoPromoCard placement="explore_end_of_list" />
+              </li>
+            ) : null}
           </ul>
         )}
       </div>
@@ -526,8 +590,8 @@ function ExplorarContent() {
                 onChange={(e) => setChallengeVenue(e.target.value)}
                 className="w-full rounded-md border border-line bg-white px-3 py-2.5"
               >
-                <option value="to_arrange">A combinar</option>
-                <option value="yes">Local disponível</option>
+                <option value="to_arrange">Local a definir</option>
+                <option value="yes">Com local</option>
                 <option value="no">Sem local</option>
               </select>
             </label>

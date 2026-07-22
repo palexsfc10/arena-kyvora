@@ -35,6 +35,8 @@ export const brand = {
   tagline: "Encontre times. Marque jogos. Viva o esporte.",
   ecosystem: "Kyvora",
   gestaoName: "Kyvora Gestão de Times",
+  instagramHandle: "arenakyvora",
+  instagramUrl: "https://www.instagram.com/arenakyvora",
 } as const;
 
 export const seo = {

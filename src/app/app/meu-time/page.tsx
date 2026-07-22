@@ -9,6 +9,7 @@ import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
 import type { TeamReputation, TeamSettings } from "@/lib/arena-types";
 import { getDiscoverableLocationHints } from "@/lib/locationHints";
+import { ManagementPromo } from "@/components/app/ManagementPromo";
 
 const MAX_LOGO_BYTES = 4 * 1024 * 1024;
 
@@ -305,6 +306,10 @@ export default function MeuTimePage() {
               {error}
             </p>
           ) : null}
+
+          <div className="mt-8">
+            <ManagementPromo variant="my_team" />
+          </div>
 
           <div className="mt-10 border-t border-line pt-8">
             <h2 className="font-display text-lg font-semibold text-ink">

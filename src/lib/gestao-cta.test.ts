@@ -33,4 +33,16 @@ describe("gestao-cta", () => {
     const href = buildGestaoManagementUrl("https://hml.kyvoraapp.com.br")!;
     expect(href).not.toMatch(/token|email|password|organization_id|Bearer/i);
   });
+
+  it("accepts UTM overrides for campaign surfaces", () => {
+    const href = buildGestaoManagementUrl("https://hml.kyvoraapp.com.br", {
+      content: "top_promo",
+      medium: "app",
+      campaign: "mobile_explore",
+    })!;
+    const url = new URL(href);
+    expect(url.searchParams.get("utm_medium")).toBe("app");
+    expect(url.searchParams.get("utm_campaign")).toBe("mobile_explore");
+    expect(url.searchParams.get("utm_content")).toBe("top_promo");
+  });
 });

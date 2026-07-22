@@ -10,19 +10,36 @@ export const GESTAO_CTA_UTM = {
   content: "authenticated_header",
 } as const;
 
+export type GestaoUtmOptions = {
+  content?: string;
+  medium?: string;
+  campaign?: string;
+};
+
 export function buildGestaoManagementUrl(
   gestaoBaseUrl: string,
-  content: string = GESTAO_CTA_UTM.content,
+  contentOrOptions: string | GestaoUtmOptions = GESTAO_CTA_UTM.content,
 ): string | null {
   const base = gestaoBaseUrl.trim();
   if (!base) return null;
 
+  const opts: GestaoUtmOptions =
+    typeof contentOrOptions === "string"
+      ? { content: contentOrOptions }
+      : contentOrOptions;
+
   try {
     const url = new URL(base);
     url.searchParams.set("utm_source", GESTAO_CTA_UTM.source);
-    url.searchParams.set("utm_medium", GESTAO_CTA_UTM.medium);
-    url.searchParams.set("utm_campaign", GESTAO_CTA_UTM.campaign);
-    url.searchParams.set("utm_content", content);
+    url.searchParams.set("utm_medium", opts.medium ?? GESTAO_CTA_UTM.medium);
+    url.searchParams.set(
+      "utm_campaign",
+      opts.campaign ?? GESTAO_CTA_UTM.campaign,
+    );
+    url.searchParams.set(
+      "utm_content",
+      opts.content ?? GESTAO_CTA_UTM.content,
+    );
     return url.toString();
   } catch {
     return null;

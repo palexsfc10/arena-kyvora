@@ -69,11 +69,22 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-canvas/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-canvas/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {brand.name}
           </p>
-          <p>arena.kyvoraapp.com.br</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+            <a
+              href={brand.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-canvas/70 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              aria-label={`Instagram @${brand.instagramHandle}`}
+            >
+              Instagram @{brand.instagramHandle}
+            </a>
+            <p>arena.kyvoraapp.com.br</p>
+          </div>
         </div>
       </Container>
     </footer>

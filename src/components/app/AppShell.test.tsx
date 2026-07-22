@@ -101,7 +101,7 @@ describe("AppShell authenticated shell", () => {
     expect(screen.getByText("by Kyvora")).toBeInTheDocument();
   });
 
-  it("uses header CTA on desktop and mobile-nav CTA on small screens", () => {
+  it("uses a discrete header Gestão link and no sticky mobile promo banner", () => {
     render(
       <AppShell>
         <p>conteudo</p>
@@ -113,40 +113,35 @@ describe("AppShell authenticated shell", () => {
     const desktop = document.querySelector(
       'a[data-cta-viewport="desktop"]',
     ) as HTMLAnchorElement | null;
-    const mobile = document.querySelector(
+    const mobileHeader = document.querySelector(
       'a[data-cta-viewport="mobile"]',
     ) as HTMLAnchorElement | null;
 
     expect(desktop).toBeTruthy();
-    expect(mobile).toBeTruthy();
+    expect(mobileHeader).toBeTruthy();
     expect(desktop?.closest("header")).toBeTruthy();
-    expect(mobile?.closest('nav[aria-label="Navegação móvel"]')).toBeTruthy();
+    expect(mobileHeader?.closest("header")).toBeTruthy();
+    expect(desktop?.textContent).toContain("Gestão de Times");
+    expect(mobileHeader?.textContent).toMatch(/Gestão/);
+    expect(desktop?.textContent).not.toContain("Teste 7 dias");
+    expect(desktop?.textContent).not.toContain("Teste grátis");
 
-    expect(desktop?.textContent).toContain("Kyvora Gestão de Times");
-    expect(desktop?.textContent).toContain("Teste 7 dias grátis");
-    expect(desktop?.textContent).not.toContain("Precisa organizar seu time?");
+    expect(desktop).toHaveAttribute("target", "_blank");
+    expect(desktop).toHaveAttribute("rel", "noopener noreferrer");
+    const href = desktop!.getAttribute("href") ?? "";
+    expect(href.startsWith("https://hml.kyvoraapp.com.br")).toBe(true);
+    expect(href).toContain(`utm_source=${GESTAO_CTA_UTM.source}`);
 
-    expect(mobile?.textContent).toContain("Kyvora Gestão de Times");
-    expect(mobile?.textContent).toContain("Teste grátis por 7 dias");
-    expect(mobile?.textContent?.trim().startsWith("7 dias")).toBe(false);
-
-    for (const link of [desktop!, mobile!]) {
-      expect(link).toHaveAttribute("target", "_blank");
-      expect(link).toHaveAttribute("rel", "noopener noreferrer");
-      const href = link.getAttribute("href") ?? "";
-      expect(href.startsWith("https://hml.kyvoraapp.com.br")).toBe(true);
-      expect(href).toContain(`utm_source=${GESTAO_CTA_UTM.source}`);
-      expect(href).toContain(`utm_medium=${GESTAO_CTA_UTM.medium}`);
-      expect(href).toContain(`utm_campaign=${GESTAO_CTA_UTM.campaign}`);
-      expect(href).toContain(`utm_content=${GESTAO_CTA_UTM.content}`);
-      expect(href).not.toMatch(/localhost|token|email|Bearer/i);
-    }
-
-    expect(screen.getByRole("link", { name: /demo FC/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Sair/i })).toBeInTheDocument();
+    expect(screen.getByTestId("mobile-bottom-nav")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Time atual: demo FC/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("header-account-menu")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Sair$/i })).toBeInTheDocument();
+    expect(mobileHeader?.className).toMatch(/rounded-full|bg-sky/);
   });
 
-  it("tracks paid Kyvora CTA with generic params only", () => {
+  it("tracks header Gestão CTA with generic params only", () => {
     render(
       <AppShell>
         <p>conteudo</p>
@@ -156,18 +151,13 @@ describe("AppShell authenticated shell", () => {
     fireEvent.click(
       document.querySelector('a[data-cta-viewport="desktop"]') as HTMLAnchorElement,
     );
+    expect(trackEvent).toHaveBeenCalledWith("kyvora_management_promo_clicked", {
+      source: "header",
+      origin: "arena",
+    });
     expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
       placement: "authenticated_header",
       viewport: "desktop",
-      origin: "arena",
-    });
-
-    fireEvent.click(
-      document.querySelector('a[data-cta-viewport="mobile"]') as HTMLAnchorElement,
-    );
-    expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
-      placement: "authenticated_mobile_nav",
-      viewport: "mobile",
       origin: "arena",
     });
   });
