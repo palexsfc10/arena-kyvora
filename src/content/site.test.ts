@@ -18,7 +18,12 @@ describe("content integrity", () => {
 
   it("exposes public env without inventing analytics ids", () => {
     expect(env.siteName).toBeTruthy();
-    expect(env.gestaoUrl).toMatch(/^https?:\/\//);
+    // Outside development, unset public URLs stay empty (no hardcoded prod defaults).
+    // When set, they must be absolute http(s) URLs.
+    if (env.gestaoUrl) {
+      expect(env.gestaoUrl).toMatch(/^https?:\/\//);
+    }
+    expect(env.enableAnalytics).toBe(false);
     expect(env.allowIndexing).toBe(false);
   });
 
