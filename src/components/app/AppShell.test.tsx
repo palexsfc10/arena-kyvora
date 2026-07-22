@@ -96,20 +96,19 @@ describe("AppShell authenticated shell", () => {
     );
 
     expect(
-      screen.getAllByRole("link", { name: /Arena by Kyvora — início/i }).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByText("by Kyvora").length).toBeGreaterThan(0);
+      screen.getByRole("link", { name: /Arena by Kyvora — início/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("by Kyvora")).toBeInTheDocument();
   });
 
-  it("keeps Gestão CTA in sidebar and mobile nav, never alone as 7 dias grátis", () => {
+  it("uses header CTA on desktop and mobile-nav CTA on small screens", () => {
     render(
       <AppShell>
         <p>conteudo</p>
       </AppShell>,
     );
 
-    const header = document.querySelector("header");
-    expect(header?.querySelector('[data-cta="paid-kyvora"]')).toBeNull();
+    expect(document.querySelector("aside")).toBeNull();
 
     const desktop = document.querySelector(
       'a[data-cta-viewport="desktop"]',
@@ -120,13 +119,12 @@ describe("AppShell authenticated shell", () => {
 
     expect(desktop).toBeTruthy();
     expect(mobile).toBeTruthy();
-    expect(desktop?.closest("aside")).toBeTruthy();
+    expect(desktop?.closest("header")).toBeTruthy();
     expect(mobile?.closest('nav[aria-label="Navegação móvel"]')).toBeTruthy();
 
-    expect(desktop?.textContent).toContain("Precisa organizar seu time?");
     expect(desktop?.textContent).toContain("Kyvora Gestão");
-    expect(desktop?.textContent).toContain("Teste grátis por 7 dias");
-    expect(desktop?.textContent).toContain("Conhecer o Kyvora");
+    expect(desktop?.textContent).toContain("Teste 7 dias grátis");
+    expect(desktop?.textContent).not.toContain("Precisa organizar seu time?");
 
     expect(mobile?.textContent).toContain("Kyvora Gestão de Times");
     expect(mobile?.textContent).toContain("Teste grátis por 7 dias");
@@ -159,7 +157,7 @@ describe("AppShell authenticated shell", () => {
       document.querySelector('a[data-cta-viewport="desktop"]') as HTMLAnchorElement,
     );
     expect(trackEvent).toHaveBeenCalledWith("paid_kyvora_cta_clicked", {
-      placement: "authenticated_sidebar",
+      placement: "authenticated_header",
       viewport: "desktop",
       origin: "arena",
     });
