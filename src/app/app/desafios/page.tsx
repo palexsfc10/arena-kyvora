@@ -12,20 +12,18 @@ import { ApiError } from "@/lib/api-client";
 import * as arenaApi from "@/lib/arena-api";
 import type { ChallengeCommentItem, ChallengeItem, RatingEligibility } from "@/lib/arena-types";
 import { trackEvent } from "@/lib/analytics";
+import {
+  formatDisplayDateTime,
+  formatVenueLabel,
+} from "@/lib/formatDisplay";
 
 const statusLabel: Record<string, string> = {
   pending: "Pendente",
-  accepted: "Aceito",
+  accepted: "Confirmado",
   awaiting_reconfirmation: "Aguardando reconfirmação",
   declined: "Recusado",
   cancelled: "Cancelado",
   expired: "Expirado",
-};
-
-const venueLabel: Record<string, string> = {
-  yes: "Local disponível",
-  no: "Sem local",
-  to_arrange: "A combinar",
 };
 
 const ACTIVE_COMMENT_STATUSES = new Set(["pending", "accepted", "awaiting_reconfirmation"]);
@@ -386,25 +384,32 @@ function DesafiosContent() {
                   ref={(el) => {
                     itemRefs.current[item.id] = el;
                   }}
+                  data-testid="challenge-card"
+                  data-challenge-status={item.status}
+                  data-challenge-direction={item.direction}
                   className="border-b border-line pb-5"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-start gap-2.5">
-                      <TeamShield logoUrl={opponentLogo(item)} name={opponentName(item)} />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-ink" title={opponentName(item)}>
-                          {item.direction === "sent" ? "Para " : "De "}
-                          {opponentName(item)}
-                        </p>
-                        <p className="mt-1 text-sm text-muted">
-                          {item.proposed_date}
-                          {item.proposed_time ? ` · ${item.proposed_time}` : ""} ·{" "}
-                          {venueLabel[item.venue_option] ?? item.venue_option}
-                        </p>
-                        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink-soft">
-                          {statusLabel[item.status] ?? item.status}
-                        </p>
-                      </div>
+                  <div className="flex min-w-0 items-start gap-2.5">
+                    <TeamShield logoUrl={opponentLogo(item)} name={opponentName(item)} />
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="truncate font-display text-base font-semibold text-ink"
+                        title={opponentName(item)}
+                      >
+                        {opponentName(item)}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-ink-soft">
+                        {item.direction === "sent" ? "Desafio enviado" : "Desafio recebido"}
+                        {" · "}
+                        {statusLabel[item.status] ?? item.status}
+                      </p>
+                      <p className="mt-2 text-sm text-ink-soft">
+                        {formatDisplayDateTime(item.proposed_date, item.proposed_time) ||
+                          item.proposed_date}
+                      </p>
+                      <p className="text-sm text-muted">
+                        {formatVenueLabel(item.venue_option)}
+                      </p>
                     </div>
                   </div>
 
@@ -419,25 +424,37 @@ function DesafiosContent() {
                     <div className="mt-3 rounded-md border border-line bg-surface p-3 text-sm">
                       <p className="font-semibold text-ink">Nova proposta aguardando confirmação</p>
                       <p className="mt-1 text-ink-soft">
-                        Combinado atual: {item.proposed_date}
-                        {item.proposed_time ? ` · ${item.proposed_time}` : ""} ·{" "}
-                        {venueLabel[item.venue_option] ?? item.venue_option}
+                        Combinado atual:{" "}
+                        {formatDisplayDateTime(item.proposed_date, item.proposed_time)} ·{" "}
+                        {formatVenueLabel(item.venue_option)}
                       </p>
                       <p className="mt-1 text-ink-soft">
-                        Proposta nova: {item.pending_proposed_date}
-                        {item.pending_proposed_time ? ` · ${item.pending_proposed_time}` : ""}
+                        Proposta nova:{" "}
+                        {formatDisplayDateTime(
+                          item.pending_proposed_date,
+                          item.pending_proposed_time,
+                        )}
                         {item.pending_venue_option
-                          ? ` · ${venueLabel[item.pending_venue_option] ?? item.pending_venue_option}`
+                          ? ` · ${formatVenueLabel(item.pending_venue_option)}`
                           : ""}
                       </p>
                       {canManage ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button type="button" size="md" onClick={() => void act(item, "reconfirm")}>
+                        <div
+                          data-testid="challenge-card-actions"
+                          className="mt-3 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap"
+                        >
+                          <Button
+                            type="button"
+                            size="md"
+                            className="w-full justify-center sm:w-auto"
+                            onClick={() => void act(item, "reconfirm")}
+                          >
                             Reconfirmar
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
+                            className="w-full justify-center sm:w-auto"
                             onClick={() => void act(item, "reject-pending")}
                           >
                             Recusar proposta
@@ -465,11 +482,12 @@ function DesafiosContent() {
                       ) : itemEligibility && !itemEligibility.eligible ? (
                         <p>{itemEligibility.reason ?? "Avaliação indisponível para esta partida."}</p>
                       ) : (
-                        <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <span>Como foi a partida com {opponentName(item)}?</span>
                           <Button
                             type="button"
                             size="md"
+                            className="w-full justify-center sm:w-auto"
                             onClick={() => setRatingFor(item)}
                           >
                             Avaliar partida
@@ -479,16 +497,24 @@ function DesafiosContent() {
                     </div>
                   ) : null}
 
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div
+                    data-testid="challenge-card-actions"
+                    className="mt-3 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap"
+                  >
                     {item.status === "pending" && canManage ? (
                       item.direction === "received" ? (
                         <>
-                          <Button type="button" onClick={() => void act(item, "accept")}>
+                          <Button
+                            type="button"
+                            className="w-full justify-center sm:w-auto"
+                            onClick={() => void act(item, "accept")}
+                          >
                             Aceitar
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
+                            className="w-full justify-center sm:w-auto"
                             onClick={() => void act(item, "decline")}
                           >
                             Recusar
@@ -498,6 +524,7 @@ function DesafiosContent() {
                         <Button
                           type="button"
                           variant="outline"
+                          className="w-full justify-center sm:w-auto"
                           onClick={() => void act(item, "cancel")}
                         >
                           Cancelar envio
@@ -508,7 +535,12 @@ function DesafiosContent() {
                     {(item.status === "accepted" || item.status === "awaiting_reconfirmation") &&
                     canManage &&
                     !isEditing ? (
-                      <Button type="button" variant="outline" onClick={() => startEdit(item)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-center sm:w-auto"
+                        onClick={() => startEdit(item)}
+                      >
                         Editar
                       </Button>
                     ) : null}
@@ -516,7 +548,7 @@ function DesafiosContent() {
                     <Button
                       type="button"
                       variant="ghost"
-                      className="gap-1.5"
+                      className="w-full justify-center gap-1.5 sm:w-auto"
                       onClick={() => void toggleComments(item)}
                     >
                       <MessageSquare className="h-4 w-4" aria-hidden />
