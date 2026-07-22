@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Manrope, Syne } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics/AnalyticsConsent";
 import { AnalyticsSpaTracker } from "@/components/analytics/AnalyticsSpaTracker";
-import { env } from "@/config/env";
+import { env, resolveMetadataBaseUrl } from "@/config/env";
 import { brand, seo } from "@/content/site";
 import "./globals.css";
 
@@ -19,10 +19,11 @@ const body = Manrope({
   display: "swap",
 });
 
-const siteUrl = env.siteUrl.replace(/\/$/, "");
+const metadataBase = resolveMetadataBaseUrl();
+const siteUrl = metadataBase.origin;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase,
   title: {
     default: seo.title,
     template: `%s · ${brand.name}`,

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { brand, ecosystem } from "@/content/site";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
 
 export function Ecosystem() {
   return (
@@ -19,16 +19,18 @@ export function Ecosystem() {
             subtitle={ecosystem.subtitle}
           />
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center lg:justify-end">
-            <Button
-              href={env.gestaoUrl}
-              variant="secondary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir {brand.gestaoName}
-            </Button>
-          </div>
+          {hasGestaoUrl() ? (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center lg:justify-end">
+              <Button
+                href={env.gestaoUrl}
+                variant="secondary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir {brand.gestaoName}
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         <ul className="mt-12 grid gap-8 border-t border-line pt-10 md:grid-cols-3">

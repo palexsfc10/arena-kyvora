@@ -9,6 +9,9 @@
  *
  * Localhost defaults are gated on NODE_ENV === "development" so production /
  * HML `next build` can DCE them out of the client bundle.
+ *
+ * Deployable builds (Docker / CI image) MUST pass SITE_URL, GESTAO_URL and
+ * KYVORA_API_BASE_URL via build args — see scripts/validate-public-env.mjs.
  */
 
 function readPublic(value: string | undefined, fallback = ""): string {
@@ -51,3 +54,38 @@ export const env = {
 } as const;
 
 export type PublicEnv = typeof env;
+
+/** True when Gestão base URL is a usable absolute http(s) URL. */
+export function hasGestaoUrl(url: string = env.gestaoUrl): boolean {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve metadataBase without calling `new URL("")`.
+ * Deployable builds must set NEXT_PUBLIC_SITE_URL (validated at image build).
+ */
+export function resolveMetadataBaseUrl(): URL {
+  const raw = env.siteUrl.trim();
+  if (raw) {
+    try {
+      return new URL(raw);
+    } catch {
+      throw new Error(
+        `Invalid NEXT_PUBLIC_SITE_URL "${raw}". Expected an absolute http(s) URL baked at build time.`,
+      );
+    }
+  }
+  if (isDev) {
+    return new URL("http://localhost:3000");
+  }
+  throw new Error(
+    "NEXT_PUBLIC_SITE_URL is required for non-development builds. Public env is inlined into the client bundle at build time — pass it as a Docker/CI build arg.",
+  );
+}

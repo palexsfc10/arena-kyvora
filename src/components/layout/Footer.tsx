@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { brand, footer, navigation } from "@/content/site";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -35,16 +35,18 @@ export function Footer() {
                   </a>
                 </li>
               ))}
-              <li>
-                <a
-                  href={env.gestaoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-canvas/80 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  {brand.gestaoName}
-                </a>
-              </li>
+              {hasGestaoUrl() ? (
+                <li>
+                  <a
+                    href={env.gestaoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-canvas/80 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    {brand.gestaoName}
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
 

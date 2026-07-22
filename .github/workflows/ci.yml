@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, feature/arena-mvp-internal]
   pull_request:
 
 jobs:
@@ -33,7 +33,11 @@ jobs:
       - name: Production build
         run: npm run build
         env:
-          NEXT_PUBLIC_SITE_URL: https://arena.kyvoraapp.com.br
+          NEXT_PUBLIC_SITE_URL: https://hml-arena.kyvoraapp.com.br
+          NEXT_PUBLIC_GESTAO_URL: https://hml.kyvoraapp.com.br
+          NEXT_PUBLIC_KYVORA_API_BASE_URL: https://hml-api.kyvoraapp.com.br
+          NEXT_PUBLIC_ALLOW_INDEXING: "false"
+          NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
@@ -42,4 +46,39 @@ jobs:
         run: npx playwright test --project=chromium
         env:
           CI: true
-          NEXT_PUBLIC_SITE_URL: https://arena.kyvoraapp.com.br
+          NEXT_PUBLIC_SITE_URL: https://hml-arena.kyvoraapp.com.br
+          NEXT_PUBLIC_GESTAO_URL: https://hml.kyvoraapp.com.br
+          NEXT_PUBLIC_KYVORA_API_BASE_URL: https://hml-api.kyvoraapp.com.br
+          NEXT_PUBLIC_ALLOW_INDEXING: "false"
+          NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+
+  admin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: admin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install Admin dependencies
+        run: npm ci
+
+      - name: Lint Admin
+        run: npm run lint
+
+      - name: Typecheck Admin
+        run: npm run typecheck
+
+      - name: Build Admin
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: https://hml-api.kyvoraapp.com.br
+          VITE_APP_ENV: staging

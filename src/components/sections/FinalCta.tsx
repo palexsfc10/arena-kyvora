@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
 import { finalCta } from "@/content/site";
 import { trackEvent } from "@/lib/analytics";
 
@@ -34,7 +34,7 @@ export function FinalCta() {
             >
               {finalCta.primaryLabel}
             </Button>
-            {env.gestaoUrl ? (
+            {hasGestaoUrl() ? (
               <Button
                 href={env.gestaoUrl}
                 variant="outline"

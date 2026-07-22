@@ -7,6 +7,12 @@
 const site = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
 const api = (process.env.NEXT_PUBLIC_KYVORA_API_BASE_URL || "").trim();
 const gestao = (process.env.NEXT_PUBLIC_GESTAO_URL || "").trim();
+const allowIndexing =
+  (process.env.NEXT_PUBLIC_ALLOW_INDEXING || "false").trim().toLowerCase() ===
+  "true";
+const enableAnalytics =
+  (process.env.NEXT_PUBLIC_ENABLE_ANALYTICS || "false").trim().toLowerCase() ===
+  "true";
 
 function fail(message) {
   console.error(`[validate-public-env] ${message}`);
@@ -25,11 +31,26 @@ function hostOf(url) {
   }
 }
 
+function assertAbsoluteHttp(name, url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      fail(`${name} must be http(s); got ${parsed.protocol}`);
+    }
+  } catch {
+    fail(`${name} must be an absolute URL; got "${url}"`);
+  }
+}
+
 if (!site || !api || !gestao) {
   fail(
-    "NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_KYVORA_API_BASE_URL and NEXT_PUBLIC_GESTAO_URL are required for image builds.",
+    "NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_KYVORA_API_BASE_URL and NEXT_PUBLIC_GESTAO_URL are required for image builds (Gestão link is mandatory in HML/prod).",
   );
 }
+
+assertAbsoluteHttp("NEXT_PUBLIC_SITE_URL", site);
+assertAbsoluteHttp("NEXT_PUBLIC_KYVORA_API_BASE_URL", api);
+assertAbsoluteHttp("NEXT_PUBLIC_GESTAO_URL", gestao);
 
 if (isLocalhost(site) || isLocalhost(api) || isLocalhost(gestao)) {
   fail(
@@ -40,6 +61,7 @@ if (isLocalhost(site) || isLocalhost(api) || isLocalhost(gestao)) {
 const siteHost = hostOf(site);
 const apiHost = hostOf(api);
 const gestaoHost = hostOf(gestao);
+const isHmlSite = siteHost.includes("hml-") || siteHost.startsWith("hml.");
 
 if (siteHost === "hml-arena.kyvoraapp.com.br") {
   if (apiHost !== "hml-api.kyvoraapp.com.br") {
@@ -54,12 +76,18 @@ if (siteHost === "hml-arena.kyvoraapp.com.br") {
   }
 }
 
-if (apiHost === "api.kyvoraapp.com.br" && siteHost.includes("hml-")) {
+if (apiHost === "api.kyvoraapp.com.br" && isHmlSite) {
   fail("HML site must not use production API host api.kyvoraapp.com.br.");
 }
 
-if (gestaoHost === "app.kyvoraapp.com.br" && siteHost.includes("hml-")) {
+if (gestaoHost === "app.kyvoraapp.com.br" && isHmlSite) {
   fail("HML site must not use production Gestão host app.kyvoraapp.com.br.");
+}
+
+if (isHmlSite && allowIndexing) {
+  fail(
+    "HML builds must keep NEXT_PUBLIC_ALLOW_INDEXING=false (got true). Indexing is only for authorized production go-live.",
+  );
 }
 
 // Guard against accidentally baking secrets into public env names.
@@ -79,4 +107,6 @@ console.log("[validate-public-env] OK", {
   site,
   api,
   gestao,
+  allowIndexing,
+  enableAnalytics,
 });

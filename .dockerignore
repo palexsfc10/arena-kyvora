@@ -14,7 +14,8 @@ coverage
 playwright-report
 test-results
 e2e
-*.md
+*.log
+admin
 arena-kyvora.code-workspace
 .vscode
 .idea

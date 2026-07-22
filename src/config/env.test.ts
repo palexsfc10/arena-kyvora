@@ -27,10 +27,31 @@ describe("env config", () => {
     vi.stubEnv("NEXT_PUBLIC_KYVORA_API_BASE_URL", "");
     vi.stubEnv("NEXT_PUBLIC_GESTAO_URL", "");
 
-    const { env } = await import("@/config/env");
+    const { env, hasGestaoUrl } = await import("@/config/env");
 
     expect(env.siteUrl).toBe("");
     expect(env.apiBaseUrl).toBe("");
     expect(env.gestaoUrl).toBe("");
+    expect(hasGestaoUrl("")).toBe(false);
+    expect(env.allowIndexing).toBe(false);
+    expect(env.enableAnalytics).toBe(false);
+  });
+
+  it("resolves metadata base safely and rejects empty non-dev site URL", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://hml-arena.kyvoraapp.com.br");
+
+    const { resolveMetadataBaseUrl } = await import("@/config/env");
+    expect(resolveMetadataBaseUrl().origin).toBe(
+      "https://hml-arena.kyvoraapp.com.br",
+    );
+
+    vi.resetModules();
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    const empty = await import("@/config/env");
+    expect(() => empty.resolveMetadataBaseUrl()).toThrow(
+      /NEXT_PUBLIC_SITE_URL is required/,
+    );
   });
 });

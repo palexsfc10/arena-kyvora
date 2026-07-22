@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { brand, navigation } from "@/content/site";
-import { env } from "@/config/env";
+import { env, hasGestaoUrl } from "@/config/env";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 
@@ -65,15 +65,17 @@ export function Header() {
               {item.label}
             </a>
           ))}
-          <a
-            href={env.gestaoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            onClick={() => trackEvent("nav_gestao")}
-          >
-            {brand.gestaoName}
-          </a>
+          {hasGestaoUrl() ? (
+            <a
+              href={env.gestaoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              onClick={() => trackEvent("nav_gestao")}
+            >
+              {brand.gestaoName}
+            </a>
+          ) : null}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -126,18 +128,20 @@ export function Header() {
               {item.label}
             </a>
           ))}
-          <a
-            href={env.gestaoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-md px-3 py-3 text-base font-medium text-ink hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            onClick={() => {
-              trackEvent("nav_gestao_mobile");
-              close();
-            }}
-          >
-            {brand.gestaoName}
-          </a>
+          {hasGestaoUrl() ? (
+            <a
+              href={env.gestaoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md px-3 py-3 text-base font-medium text-ink hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              onClick={() => {
+                trackEvent("nav_gestao_mobile");
+                close();
+              }}
+            >
+              {brand.gestaoName}
+            </a>
+          ) : null}
           <div className="flex flex-col gap-2 pt-2">
             <Button
               href="/entrar"
