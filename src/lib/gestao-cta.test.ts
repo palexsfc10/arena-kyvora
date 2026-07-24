@@ -34,6 +34,21 @@ describe("gestao-cta", () => {
     expect(href).not.toMatch(/token|email|password|organization_id|Bearer/i);
   });
 
+  it("marks authenticated CTAs for Gestão session handoff without secrets", () => {
+    const href = buildGestaoManagementUrl("https://hml.kyvoraapp.com.br")!;
+    const url = new URL(href);
+    expect(url.searchParams.get("kyvora_entry")).toBe("arena_session");
+  });
+
+  it("allows disabling session handoff for non-auth surfaces", () => {
+    const href = buildGestaoManagementUrl("https://hml.kyvoraapp.com.br", {
+      content: "marketing",
+      sessionHandoff: false,
+    })!;
+    const url = new URL(href);
+    expect(url.searchParams.get("kyvora_entry")).toBeNull();
+  });
+
   it("accepts UTM overrides for campaign surfaces", () => {
     const href = buildGestaoManagementUrl("https://hml.kyvoraapp.com.br", {
       content: "top_promo",
