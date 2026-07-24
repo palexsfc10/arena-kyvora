@@ -1,6 +1,8 @@
 /**
  * Build Gestão CTA URLs from the centralized public base URL.
  * Never embed HML/prod/localhost literals at call sites.
+ * Never embed access tokens or PII — identity handoff uses the shared
+ * refresh cookie + `kyvora_entry=arena_session` marker consumed by Gestão.
  */
 
 export const GESTAO_CTA_UTM = {
@@ -10,10 +12,19 @@ export const GESTAO_CTA_UTM = {
   content: "authenticated_header",
 } as const;
 
+/** Marker consumed by Kyvora Gestão to discard a stale localStorage session. */
+export const GESTAO_SESSION_ENTRY_PARAM = "kyvora_entry";
+export const GESTAO_SESSION_ENTRY_VALUE = "arena_session";
+
 export type GestaoUtmOptions = {
   content?: string;
   medium?: string;
   campaign?: string;
+  /**
+   * When true (default for this builder), append the Arena session-entry marker
+   * so Gestão prefers the shared refresh cookie over a prior localStorage user.
+   */
+  sessionHandoff?: boolean;
 };
 
 export function buildGestaoManagementUrl(
@@ -40,6 +51,12 @@ export function buildGestaoManagementUrl(
       "utm_content",
       opts.content ?? GESTAO_CTA_UTM.content,
     );
+    if (opts.sessionHandoff !== false) {
+      url.searchParams.set(
+        GESTAO_SESSION_ENTRY_PARAM,
+        GESTAO_SESSION_ENTRY_VALUE,
+      );
+    }
     return url.toString();
   } catch {
     return null;
